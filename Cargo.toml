@@ -1,0 +1,8 @@
+[package]
+name = "gg"
+version = "0.1.0"
+authors = ["Ninan John <jninan@thoughtworks.com>"]
+edition = "2018"
+
+[dependencies]
+walkdir = "2"
