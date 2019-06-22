@@ -7,3 +7,4 @@ edition = "2018"
 [dependencies]
 walkdir = "2"
 git2 = "0.8"
+colored = "1.8.0"

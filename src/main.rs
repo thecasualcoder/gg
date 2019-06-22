@@ -1,6 +1,7 @@
 use walkdir::WalkDir;
 use git2::{Repository, StatusOptions};
 use std::path::{PathBuf, Path};
+use colored::*;
 
 fn main() {
     let mut all_git_dirs = vec![];
@@ -18,8 +19,8 @@ fn main() {
                 let repo = Repository::open(path);
                 let repo = repo.unwrap();
                 if repo.is_bare() {
-                    println!("{:#?}: bare", entry.path().parent().unwrap());
-                    continue
+                    println!("{:#?}: {}", entry.path().parent().unwrap(), "bare".yellow());
+                    continue;
                 }
 
                 opts.include_ignored(true)
@@ -33,7 +34,7 @@ fn main() {
                         // Todo: https://github.com/rust-lang/git2-rs/blob/master/examples/status.rs
                         // Todo: Line 150
                         // Currently this does not filter anything.
-                        println!("{:#?}: untracked", entry.path().parent().unwrap());
+                        println!("{:#?}: {}", entry.path().parent().unwrap(), "untracked".red());
                     }
                     Err(e) => {
                         panic!("Error in getting status for entry: {:#?}", entry.clone().path().parent().unwrap())
@@ -41,6 +42,5 @@ fn main() {
                 }
                 continue;
             }
-
         }
 }
