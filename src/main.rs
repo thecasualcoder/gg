@@ -17,11 +17,11 @@ fn main() {
         .get_matches();
 
     if let Some(matches) = matches.subcommand_matches("status") {
-        let current_working_directory = WalkDir::new(current_dir().unwrap().display().to_string().as_str());
-        let mut directory = current_working_directory;
+        let mut path = current_dir().unwrap();
         if let Some(option) = matches.value_of("PATH") {
-            directory = WalkDir::new(option);
+            path = PathBuf::from(option)
         };
+        let directory = WalkDir::new(path.to_str().unwrap());
         let mut all_git_dirs = vec![];
 
         for entry in directory
