@@ -1,13 +1,14 @@
 use std::env::current_dir;
 use std::path::{Path, PathBuf};
 
-use clap::{App, Arg, SubCommand};
+use clap::{App, Arg, SubCommand, AppSettings};
 use colored::*;
 use git2::{Repository, StatusOptions};
 use walkdir::WalkDir;
 
 fn main() {
     let matches = App::new("Git Governance")
+        .setting(AppSettings::ArgRequiredElseHelp)
         .version("1.0")
         .subcommand(SubCommand::with_name("status")
             .arg(Arg::with_name("PATH")
