@@ -1,13 +1,6 @@
-use colored::*;
-use std::path::Path;
 use git2::{Repository, StatusOptions};
 
-pub fn process_git_repo(repo: Repository, path: &Path) {
-    if repo.is_bare() {
-        println!("{:#?}: {}", path, "bare".yellow());
-        return;
-    };
-
+pub fn status<'a>(repo: Repository) -> Result<Vec<&'a str>, String> {
     let mut opts = StatusOptions::new();
     opts.include_ignored(true)
         .include_untracked(true)
@@ -38,16 +31,10 @@ pub fn process_git_repo(repo: Repository, path: &Path) {
                         statuses_in_dir.push("modifications");
                     };
                 };
-            if statuses_in_dir.is_empty() {
-                println!("{:#?}: {}", path, "no changes".green());
-            } else {
-                statuses_in_dir.sort();
-                statuses_in_dir.dedup();
-                println!("{:#?}: {}", path, statuses_in_dir.join(", ").red());
-            };
+            return Ok(statuses_in_dir);
         }
         Err(e) => {
-            panic!("Error: {} in getting status for dir: {:#?}", e, path);
+            return Err(e.to_string());
         }
     };
 }

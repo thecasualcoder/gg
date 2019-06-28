@@ -7,6 +7,7 @@ use std::env::current_dir;
 use std::path::Path;
 
 use clap::{App, AppSettings, Arg, SubCommand};
+use colored::*;
 use git2::Repository;
 use walkdir::{DirEntry, WalkDir};
 
@@ -68,7 +69,23 @@ fn process_directory(dir: DirEntry) {
 fn process_git_directory(path: &Path) {
     let repo = Repository::open(path);
     match repo {
-        Ok(repo) => git::process_git_repo(repo, path),
+        Ok(repo) => {
+            match git::status(repo) {
+                Ok(status) => print_repo_status(path, status),
+                Err(err) => println!("Error: {} in processing git repository {:#?}", err, path)
+            };
+        }
         Err(err) => println!("Error: {} in opening git repository {:#?}", err, path)
     }
+}
+
+fn print_repo_status(path: &Path, statuses_in_dir: Vec<&str>) -> () {
+    let mut statuses_in_dir = statuses_in_dir;
+    if statuses_in_dir.is_empty() {
+        println!("{:#?}: {}", path, "no changes".green());
+    } else {
+        statuses_in_dir.sort();
+        statuses_in_dir.dedup();
+        println!("{:#?}: {}", path, statuses_in_dir.join(", ").red());
+    };
 }
