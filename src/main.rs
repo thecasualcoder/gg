@@ -6,40 +6,54 @@ extern crate walkdir;
 use std::env::current_dir;
 use std::path::Path;
 
-use clap::{App, AppSettings, Arg, SubCommand};
+use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
 use colored::*;
 use git2::Repository;
 use walkdir::{DirEntry, WalkDir};
 
 mod git;
+mod input_args;
 
 fn main() {
-    let matches = App::new("Git Governance")
+    let app = App::new("Git Governance")
         .setting(AppSettings::ArgRequiredElseHelp)
         .version("1.0")
         .subcommand(SubCommand::with_name("status")
             .arg(Arg::with_name("PATH")
                 .short("f")
                 .takes_value(true)
-                .help("path of the directory from which the git governance will start analysing the git repos")))
-        .get_matches();
+                .help("path of the directory from which the git governance will start analysing the git repos")
+            )
+        );
 
-    if let Some(matches) = matches.subcommand_matches("status") {
-        match matches.value_of("PATH") {
-            Some(path) => process_directories(path),
-            None => {
-                match current_dir() {
-                    Ok(dir) => {
-                        match dir.to_str() {
-                            Some(dir) => process_directories(dir),
-                            None => panic!("Error in coverting current directory to string")
-                        }
-                    }
-                    Err(err) => panic!("Error: {}", err),
-                }
-            }
-        };
+    let args = input_args::InputArgs::parse_inputs(app.get_matches());
+
+    match args.input_command {
+        input_args::InputCommand::Status => status(args.get_matches()),
+        input_args::InputCommand::Create => create(),
+        input_args::InputCommand::Error => {}
     }
+}
+
+fn create() {
+//    Todo: to be implemented
+}
+
+fn status(matches: &ArgMatches) {
+    match matches.value_of("PATH") {
+        Some(path) => process_directories(path),
+        None => {
+            match current_dir() {
+                Ok(dir) => {
+                    match dir.to_str() {
+                        Some(dir) => process_directories(dir),
+                        None => panic!("Error in coverting current directory to string")
+                    }
+                }
+                Err(err) => panic!("Error: {}", err),
+            }
+        }
+    };
 }
 
 fn process_directories(path: &str) {
