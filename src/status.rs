@@ -1,9 +1,18 @@
-use clap::ArgMatches;
+use clap::{ArgMatches, SubCommand, Arg, App};
 use git2::{Repository, StatusOptions};
 use std::env::current_dir;
 use std::path::Path;
 use walkdir::{DirEntry, WalkDir};
 use colored::*;
+
+pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
+    SubCommand::with_name("status")
+        .arg(Arg::with_name("PATH")
+            .short("f")
+            .takes_value(true)
+            .help("path at which to create the local repo")
+        )
+}
 
 pub fn status(matches: &ArgMatches) {
     match matches.value_of("PATH") {
