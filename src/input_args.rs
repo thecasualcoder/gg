@@ -7,24 +7,39 @@ pub enum InputCommand {
     Error,
 }
 
+impl InputCommand {
+    fn as_str(&self) -> &'static str {
+        match *self {
+            InputCommand::Status => "status",
+            InputCommand::Create => "create",
+            _ => "unknown command"
+        }
+    }
+}
+
 pub struct InputArgs<'a> {
     input_command: InputCommand,
     arg_matches: ArgMatches<'a>,
-    error_input: bool,
 }
 
 impl<'a> InputArgs<'a> {
     pub fn parse_inputs(args: ArgMatches) -> InputArgs {
-        match args.subcommand_matches("status") {
-            Some(matches) => InputArgs {
+        let subcommand_name = args.subcommand_name().expect("Could not get subcommand name");
+        let matches = args.subcommand_matches(subcommand_name).expect("Failed to get arg matches");
+        if subcommand_name == InputCommand::Status.as_str() {
+            InputArgs {
                 input_command: InputCommand::Status,
                 arg_matches: matches.to_owned(),
-                error_input: false,
-            },
-            _ => InputArgs {
+            }
+        } else if subcommand_name == InputCommand::Create.as_str() {
+            InputArgs {
+                input_command: InputCommand::Create,
+                arg_matches: matches.to_owned(),
+            }
+        } else {
+            InputArgs {
                 input_command: InputCommand::Error,
                 arg_matches: ArgMatches::default(),
-                error_input: true,
             }
         }
     }
