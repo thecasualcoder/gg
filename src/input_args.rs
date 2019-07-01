@@ -1,6 +1,4 @@
-use std::env::ArgsOs;
-
-use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
+use clap::ArgMatches;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum InputCommand {
@@ -10,9 +8,9 @@ pub enum InputCommand {
 }
 
 pub struct InputArgs<'a> {
-    pub input_command: InputCommand,
-    pub arg_matches:  ArgMatches<'a>,
-    pub error_input: bool,
+    input_command: InputCommand,
+    arg_matches: ArgMatches<'a>,
+    error_input: bool,
 }
 
 impl<'a> InputArgs<'a> {

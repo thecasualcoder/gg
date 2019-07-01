@@ -28,7 +28,7 @@ fn main() {
 
     let args = input_args::InputArgs::parse_inputs(app.get_matches());
 
-    match args.input_command {
+    match args.input_command() {
         input_args::InputCommand::Status => status(args.get_matches()),
         input_args::InputCommand::Create => create(),
         input_args::InputCommand::Error => {}
