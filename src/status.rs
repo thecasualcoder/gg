@@ -1,9 +1,10 @@
 use clap::{ArgMatches, SubCommand, Arg, App};
-use git2::{Repository, StatusOptions};
+use git2::{Repository, StatusOptions, Statuses, Error};
 use std::env::current_dir;
 use std::path::Path;
 use walkdir::{DirEntry, WalkDir};
 use colored::*;
+use crate::git::GitAction;
 
 pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("status")
@@ -86,7 +87,9 @@ fn git_status<'a>(repo: Repository) -> Result<Vec<&'a str>, String> {
         .recurse_untracked_dirs(false)
         .exclude_submodules(false);
 
-    match repo.statuses(Some(&mut opts)) {
+    let gst = GitStatus { repo: repo };
+    let git_statuses = gst.git_status(&mut opts);
+    match git_statuses {
         Ok(statuses) => {
             let mut statuses_in_dir = vec![];
             for entry in statuses
@@ -115,5 +118,15 @@ fn git_status<'a>(repo: Repository) -> Result<Vec<&'a str>, String> {
         Err(e) => {
             return Err(e.to_string());
         }
-    };
+    }
+}
+
+pub struct GitStatus {
+    repo: Repository,
+}
+
+impl GitAction for GitStatus {
+    fn git_status(&self, opts: &mut StatusOptions) -> Result<Statuses, Error> {
+        self.repo.statuses(Some(opts))
+    }
 }

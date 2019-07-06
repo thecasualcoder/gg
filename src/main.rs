@@ -8,6 +8,7 @@ use clap::{App, AppSettings};
 mod input_args;
 mod status;
 mod create;
+mod git;
 
 fn main() {
     let app = App::new("Git Governance")
