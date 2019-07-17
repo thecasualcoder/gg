@@ -9,3 +9,7 @@ walkdir = "2"
 git2 = "0.8"
 colored = "1.8.0"
 clap = "2"
+
+[dev-dependencies]
+mockers = "0.21.0"
+mockers_derive = "0.21.0"

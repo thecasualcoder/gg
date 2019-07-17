@@ -1,10 +1,13 @@
-use clap::{ArgMatches, SubCommand, Arg, App};
-use git2::{Repository, StatusOptions, Statuses, Error};
 use std::env::current_dir;
+
 use std::path::Path;
-use walkdir::{DirEntry, WalkDir};
+use clap::{App, Arg, ArgMatches, SubCommand};
 use colored::*;
+use git2::{Error as GitError, Repository, Statuses, StatusOptions};
+use walkdir::{DirEntry, WalkDir};
+
 use crate::git::GitAction;
+use std::error::Error;
 
 pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("status")
@@ -32,7 +35,7 @@ pub fn status(matches: &ArgMatches) {
     };
 }
 
-fn process_directories(path: &str) {
+fn process_directories(path: &str) -> Result<(), Box<dyn Error>> {
     let directory = WalkDir::new(path);
 
     for entry in directory
@@ -40,36 +43,35 @@ fn process_directories(path: &str) {
         .contents_first(true)
         .same_file_system(true)
         {
-            match entry {
-                Ok(directory) => process_directory(directory),
-                Err(err) => panic!(err),
-            };
+            process_directory(entry?)?
         }
+    Ok(())
 }
 
-fn process_directory(dir: DirEntry) {
+fn process_directory(dir: DirEntry) -> Result<(), Box<dyn Error>> {
     if dir.file_name().eq(".git") {
         match dir.path().parent() {
-            Some(dir) => process_git_directory(dir),
-            None => println!("Error when getting parent directory of .git dir {:#?}", dir.path())
-        };
-    };
-}
-
-fn process_git_directory(path: &Path) {
-    let repo = Repository::open(path);
-    match repo {
-        Ok(repo) => {
-            match git_status(repo) {
-                Ok(status) => print_repo_status(path, status),
-                Err(err) => println!("Error: {} in processing git repository {:#?}", err, path)
-            };
+            Some(dir) => {
+                let path = Repository::open(dir)?;
+                let statuses = process_git_directory(path)?;
+                print_repo_status(dir, statuses);
+            }
+            None => {}
         }
-        Err(err) => println!("Error: {} in opening git repository {:#?}", err, path)
     }
+    Ok(())
 }
 
-fn print_repo_status(path: &Path, statuses_in_dir: Vec<&str>) -> () {
+fn process_git_directory<'a>(repo: Repository) -> Result<Vec<&'a str>, Box<dyn Error>> {
+    let mut opts = StatusOptions::new();
+    opts.include_ignored(true)
+        .include_untracked(true)
+        .recurse_untracked_dirs(false)
+        .exclude_submodules(false);
+    git_status(repo, &mut opts)
+}
+
+fn print_repo_status(path: &Path, statuses_in_dir: Vec<&str>) {
     let mut statuses_in_dir = statuses_in_dir;
     if statuses_in_dir.is_empty() {
         println!("{:#?}: {}", path, "no changes".green());
@@ -80,45 +82,32 @@ fn print_repo_status(path: &Path, statuses_in_dir: Vec<&str>) -> () {
     };
 }
 
-fn git_status<'a>(repo: Repository) -> Result<Vec<&'a str>, String> {
-    let mut opts = StatusOptions::new();
-    opts.include_ignored(true)
-        .include_untracked(true)
-        .recurse_untracked_dirs(false)
-        .exclude_submodules(false);
-
+fn git_status<'a>(repo: Repository, opts: &mut StatusOptions) -> Result<Vec<&'a str>, Box<dyn Error>> {
     let gst = GitStatus { repo: repo };
-    let git_statuses = gst.git_status(&mut opts);
-    match git_statuses {
-        Ok(statuses) => {
-            let mut statuses_in_dir = vec![];
-            for entry in statuses
-                .iter()
-                .filter(|e| e.status() != git2::Status::CURRENT)
-                {
-                    let status = &entry.status();
-                    if git2::Status::is_wt_new(status) {
-                        statuses_in_dir.push("new files");
-                    };
-                    if git2::Status::is_wt_deleted(status) {
-                        statuses_in_dir.push("deletions");
-                    };
-                    if git2::Status::is_wt_renamed(status) {
-                        statuses_in_dir.push("renames");
-                    };
-                    if git2::Status::is_wt_typechange(status) {
-                        statuses_in_dir.push("typechanges");
-                    };
-                    if git2::Status::is_wt_modified(status) {
-                        statuses_in_dir.push("modifications");
-                    };
-                };
-            return Ok(statuses_in_dir);
-        }
-        Err(e) => {
-            return Err(e.to_string());
-        }
-    }
+    let git_statuses = gst.git_status(opts)?;
+    let mut statuses_in_dir = vec![];
+    for entry in git_statuses
+        .iter()
+        .filter(|e| e.status() != git2::Status::CURRENT)
+        {
+            let status = &entry.status();
+            if git2::Status::is_wt_new(status) {
+                statuses_in_dir.push("new files");
+            };
+            if git2::Status::is_wt_deleted(status) {
+                statuses_in_dir.push("deletions");
+            };
+            if git2::Status::is_wt_renamed(status) {
+                statuses_in_dir.push("renames");
+            };
+            if git2::Status::is_wt_typechange(status) {
+                statuses_in_dir.push("typechanges");
+            };
+            if git2::Status::is_wt_modified(status) {
+                statuses_in_dir.push("modifications");
+            };
+        };
+    return Ok(statuses_in_dir);
 }
 
 pub struct GitStatus {
@@ -126,7 +115,7 @@ pub struct GitStatus {
 }
 
 impl GitAction for GitStatus {
-    fn git_status(&self, opts: &mut StatusOptions) -> Result<Statuses, Error> {
+    fn git_status(&self, opts: &mut StatusOptions) -> Result<Statuses, GitError> {
         self.repo.statuses(Some(opts))
     }
 }
