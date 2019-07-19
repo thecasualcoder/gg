@@ -26,7 +26,7 @@ pub fn status(matches: &ArgMatches) {
                 Ok(dir) => {
                     match dir.to_str() {
                         Some(dir) => process_directories(dir),
-                        None => panic!("Error in coverting current directory to string")
+                        None => panic!("Error in converting current directory to string")
                     }
                 }
                 Err(err) => panic!("Error: {}", err),
@@ -83,7 +83,7 @@ fn print_repo_status(path: &Path, statuses_in_dir: Vec<&str>) {
 }
 
 fn git_status<'a>(repo: Repository, opts: &mut StatusOptions) -> Result<Vec<&'a str>, Box<dyn Error>> {
-    let gst = GitStatus { repo: repo };
+    let gst = GitStatus { repo };
     let git_statuses = gst.git_status(opts)?;
     let mut statuses_in_dir = vec![];
     for entry in git_statuses
