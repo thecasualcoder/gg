@@ -83,8 +83,9 @@ fn print_repo_status(path: &Path, statuses_in_dir: Vec<&str>) {
 }
 
 fn git_status<'a>(repo: Repository, opts: &mut StatusOptions) -> Result<Vec<&'a str>, Box<dyn Error>> {
-    let gst = GitStatus { repo };
-    let git_statuses = gst.git_status(opts)?;
+    let mut gst = GitStatus { repo: repo, opts };
+    let git_statuses = gst.git_action()?;
+
     let mut statuses_in_dir = vec![];
     for entry in git_statuses
         .iter()
@@ -110,12 +111,13 @@ fn git_status<'a>(repo: Repository, opts: &mut StatusOptions) -> Result<Vec<&'a 
     return Ok(statuses_in_dir);
 }
 
-pub struct GitStatus {
+pub struct GitStatus<'a> {
     repo: Repository,
+    opts: &'a mut StatusOptions,
 }
 
-impl GitAction for GitStatus {
-    fn git_status(&self, opts: &mut StatusOptions) -> Result<Statuses, GitError> {
-        self.repo.statuses(Some(opts))
+impl<'a> GitAction for GitStatus<'a> {
+    fn git_action(&mut self) -> Result<Statuses, GitError> {
+        self.repo.statuses(Some(self.opts))
     }
 }
