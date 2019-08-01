@@ -1,7 +1,7 @@
 [package]
 name = "gg"
 version = "0.1.0"
-authors = ["Ninan John <jninan@thoughtworks.com>"]
+authors = ["Ninan John <jninan@thoughtworks.com>", "Dinesh <Diny>"]
 edition = "2018"
 
 [dependencies]
@@ -9,6 +9,7 @@ walkdir = "2"
 git2 = "0.8"
 colored = "1.8.0"
 clap = "2"
+reqwest = "0.9.19"
 
 [dev-dependencies]
 mockers = "0.21.0"

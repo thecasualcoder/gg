@@ -1,3 +1,5 @@
+#![recursion_limit = "128"]
+extern crate reqwest;
 extern crate clap;
 extern crate colored;
 extern crate git2;
