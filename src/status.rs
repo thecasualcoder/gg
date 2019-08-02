@@ -8,6 +8,7 @@ use walkdir::{DirEntry, WalkDir};
 
 use crate::git::GitAction;
 use std::error::Error;
+use std::process;
 
 pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("status")
@@ -20,12 +21,18 @@ pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
 
 pub fn status(matches: &ArgMatches) {
     match matches.value_of("PATH") {
-        Some(path) => process_directories(path),
+        Some(path) => process_directories(path).unwrap_or_else(|err| {
+            println!("Failed getting status for path {}, error: {}", path, err);
+            process::exit(1);
+        }),
         None => {
             match current_dir() {
                 Ok(dir) => {
                     match dir.to_str() {
-                        Some(dir) => process_directories(dir),
+                        Some(dir) => process_directories(dir).unwrap_or_else(|err| {
+                            println!("Failed to get status for current directory, error: {}", err);
+                            process::exit(1);
+                        }),
                         None => panic!("Error in converting current directory to string")
                     }
                 }

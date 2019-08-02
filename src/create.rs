@@ -1,12 +1,12 @@
-use clap::{App, Arg, SubCommand, ArgMatches};
-use std::env::current_dir;
-use std::path::Path;
-use std::{fs, env, process};
-use crate::create::GitPlatform::Github;
-use reqwest::{RequestBuilder, Client};
+use std::{env, process};
 use std::collections::HashMap;
+use std::env::current_dir;
 use std::error::Error;
+use std::path::Path;
+
+use clap::{App, Arg, ArgMatches, SubCommand};
 use git2::build::RepoBuilder;
+use reqwest::{Client, RequestBuilder};
 
 pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("create")
@@ -46,21 +46,18 @@ pub fn create(args: &ArgMatches) {
     let path = args.value_of("repo_path")
         .unwrap_or(current_dir_path);
 
-    let mut api_token = String::new();
-    let token = args.value_of("token").unwrap_or("");
+    let mut token = String::from(args.value_of("token").unwrap_or(""));
     if token == "" {
         if env::var("GITHUB_TOKEN").is_err() {
-            panic!("GITHUB_TOKEN is missing. Set this as a flag or as an env variable")
+            panic!("GITHUB_TOKEN is missing. Set this as a flag using -t or as an env variable")
         } else {
-            api_token = env::var("GITHUB_TOKEN").unwrap()
+            token = env::var("GITHUB_TOKEN").unwrap()
         }
-    } else {
-        api_token = String::from(token);
     }
 
     let platform = args.value_of("platform").unwrap();
 
-    let remote_url = create_remote(api_token, platform, repo_name).unwrap_or_else(|err| {
+    let remote_url = create_remote(token, platform, repo_name).unwrap_or_else(|err| {
         println!("Failed creating a remote repo: {}", err);
         process::exit(1);
     });
@@ -84,11 +81,6 @@ enum GitPlatform {
 }
 
 impl GitPlatform {
-    fn as_str(&self) -> &'static str {
-        match *self {
-            GitPlatform::Github => "github"
-        }
-    }
 
     fn from_str(platform: &str) -> GitPlatform {
         match platform {
@@ -123,7 +115,7 @@ struct GitRemoteRepo {
 impl GitRemoteRepo {
     fn create(self) -> Result<String, Box<dyn Error>> {
         let client = reqwest::Client::new();
-        let mut request_builder = self.platform.create_api(client, self.repo_name, self.token);
+        let request_builder = self.platform.create_api(client, self.repo_name, self.token);
         let mut response = request_builder.send()?;
         let returned_json: serde_json::Value = response.json()?;
         let errors = returned_json["errors"].as_array().unwrap_or(&Vec::new()).to_owned();
