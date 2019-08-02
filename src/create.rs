@@ -1,11 +1,12 @@
 use clap::{App, Arg, SubCommand, ArgMatches};
 use std::env::current_dir;
 use std::path::Path;
-use std::{fs, env};
+use std::{fs, env, process};
 use crate::create::GitPlatform::Github;
 use reqwest::{RequestBuilder, Client};
 use std::collections::HashMap;
 use std::error::Error;
+use git2::build::RepoBuilder;
 
 pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("create")
@@ -59,21 +60,22 @@ pub fn create(args: &ArgMatches) {
 
     let platform = args.value_of("platform").unwrap();
 
-    create_remote(api_token, platform, repo_name);
+    let remote_url = create_remote(api_token, platform, repo_name).unwrap_or_else(|err| {
+        println!("Failed creating a remote repo: {}", err);
+        process::exit(1);
+    });
 
-//    match create_local_directory(path) {
-//        Ok(_) => {
-//            create_remote(api_token, platform, repo_name)
-//        }
-//        Err(e) => {
-//            panic!("error while creating local directory")
-//        }
-//    }
-}
+    let result = RepoBuilder::new()
+        .clone(remote_url.as_str(), Path::new(path));
 
-fn create_local_directory(path: &str) -> std::io::Result<()> {
-    fs::create_dir(path)?;
-    Ok(())
+    match result {
+        Ok(_) => {
+            println!("Created repo at {} and cloned locally at {}", remote_url, path);
+        }
+        Err(e) => {
+            println!("Failed to clone repo {}, err: {}", remote_url, e);
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -119,25 +121,27 @@ struct GitRemoteRepo {
 }
 
 impl GitRemoteRepo {
-    fn create(self) -> Result<(), Box<dyn Error>> {
+    fn create(self) -> Result<String, Box<dyn Error>> {
         let client = reqwest::Client::new();
         let mut request_builder = self.platform.create_api(client, self.repo_name, self.token);
-        let response_status = request_builder.send()?
-            .status();
-
-        if response_status.as_str() != "201" {
-            panic!("Creating remote repo failed");
+        let mut response = request_builder.send()?;
+        let returned_json: serde_json::Value = response.json()?;
+        let errors = returned_json["errors"].as_array().unwrap_or(&Vec::new()).to_owned();
+        if errors.len() > 0 {
+            let message = errors[0].get("message").expect("Failed to get error message").to_owned();
+            println!("Error message: {:#?}", message);
+            process::exit(1)
         }
-        Ok(())
+        let url = returned_json["clone_url"].as_str().expect("Failed to get remote url from response");
+        Ok(url.to_owned())
     }
 }
 
-fn create_remote(token: String, platform: &str, repo_name: &str) -> Result<(), Box<dyn Error>> {
+fn create_remote(token: String, platform: &str, repo_name: &str) -> Result<String, Box<dyn Error>> {
     let remote_repo = GitRemoteRepo {
         platform: GitPlatform::from_str(platform),
         token: token,
         repo_name: String::from(repo_name),
     };
-    remote_repo.create()?;
-    Ok(())
+    remote_repo.create()
 }
