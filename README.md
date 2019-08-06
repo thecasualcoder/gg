@@ -12,6 +12,8 @@ cd gg
 cargo install --path .
 ```
 
+> Note: Recommaded rustc/cargo version: 1.36.0 and above or 1.37.0-nightly and above 
+
 
 ##### Usage:
 
