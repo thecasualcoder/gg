@@ -1,4 +1,5 @@
 #### Git Governance
+[![Build Status](https://travis-ci.org/thecasualcoder/gg.svg?branch=master)](https://travis-ci.org/thecasualcoder/gg)
 
 A tool to manage multiple git repositories
 
