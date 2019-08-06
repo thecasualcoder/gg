@@ -31,12 +31,19 @@ before_deploy:
 - git log ${PREVIOUS_TAG}..${TRAVIS_TAG} --oneline
 - export GITHUB_RELEASE_NAME="v${TRAVIS_TAG}"
 deploy:
-  provider: releases
-  api_key:
-    secure: vjjx8QtMtCfxN4j0hRKQTw/qR3uZtiyreVz9A2coP8tuPqsFSTuDGOmMaL8/p9PDuMjSsj9ThQax3sLle46Y8VcnwiygcWLZB8kqdCEYtJxUwTUBsJ6L2At1KLHSYVIyyCuJQ8fI5zD7RlicfvxOkQToC/fyqseI1qoDP9UBj/qGGJbJRIbGHSEbiir1kNPhZsFDlqoSueAHG3aEwD1ZD68Qeh5a+D3oJki07w2XIdhHcBQmls/YvP+f7tjY1cDe/MjE/OE2HLOD039TuRGE97fn6/+UFDcaEVxhH/8E7JchQYEozruVyEXuL8GyXJCJPKi07pUSQQWZL10y9torEOIO8B1J7UwE3+cZ+gyjHtVyOkaUq+fcMhpQrX2RI44L9xQWaxYm7lTn1a9hs2ZtcMTz4wCUbp+sXAD9c5uhLGFncS7M0DKzKe1VINOqOallINUi1LOT4en9fQAT6C/h9IYcNiw1RKecDzhCx39a1ciOoulc8n1CDkAUVphvwwYSB5is2P/paKnCLhcExLtj/48MLQ322McW0GBXJon6pz2IVO+iTBZdO3dyursZxji0RPTt76M6uYyXMfMwYBhwOA6pef3ecHftb7WofH0Z0QvtoDcVucisJFlOrNOEpMwhXx5miQazHFYsLNVFrrKKfNla/3XEDa9ekeGH1YebVrI=
-  file: '$PROJECT_NAME-$TRAVIS_TAG-$TARGET.tar.gz'
-  skip_cleanup: true
-  on:
-    tags: true
-    repo: thecasualcoder/gg
-    condition: $TRAVIS_RUST_VERSION = stable && $TARGET != ""
+  - provider: releases
+    api_key:
+      secure: vjjx8QtMtCfxN4j0hRKQTw/qR3uZtiyreVz9A2coP8tuPqsFSTuDGOmMaL8/p9PDuMjSsj9ThQax3sLle46Y8VcnwiygcWLZB8kqdCEYtJxUwTUBsJ6L2At1KLHSYVIyyCuJQ8fI5zD7RlicfvxOkQToC/fyqseI1qoDP9UBj/qGGJbJRIbGHSEbiir1kNPhZsFDlqoSueAHG3aEwD1ZD68Qeh5a+D3oJki07w2XIdhHcBQmls/YvP+f7tjY1cDe/MjE/OE2HLOD039TuRGE97fn6/+UFDcaEVxhH/8E7JchQYEozruVyEXuL8GyXJCJPKi07pUSQQWZL10y9torEOIO8B1J7UwE3+cZ+gyjHtVyOkaUq+fcMhpQrX2RI44L9xQWaxYm7lTn1a9hs2ZtcMTz4wCUbp+sXAD9c5uhLGFncS7M0DKzKe1VINOqOallINUi1LOT4en9fQAT6C/h9IYcNiw1RKecDzhCx39a1ciOoulc8n1CDkAUVphvwwYSB5is2P/paKnCLhcExLtj/48MLQ322McW0GBXJon6pz2IVO+iTBZdO3dyursZxji0RPTt76M6uYyXMfMwYBhwOA6pef3ecHftb7WofH0Z0QvtoDcVucisJFlOrNOEpMwhXx5miQazHFYsLNVFrrKKfNla/3XEDa9ekeGH1YebVrI=
+    file: "$PROJECT_NAME-$TRAVIS_TAG-$TARGET.tar.gz"
+    skip_cleanup: true
+    on:
+      tags: true
+      repo: thecasualcoder/gg
+      condition: $TRAVIS_RUST_VERSION = stable && $TARGET != ""
+  - provider: cargo
+    token:
+      secure: I2EkMJeIMaMm9MpgYK1h4Bv0qFQb2MgAEdEo4YyPmqM8SolPv1/wk/RTFmBGbYzIdh+yQC5p2p+ap2cVVmuBaDoP1r50Jo+28m2vbo2+NnHntM7EsTSkyJHJG//NsMqaIyyR9+o8VyYb8JgAXErP8aLCqrIhurwbf2Qq8O/NSD3axgSGB6y63htOQ2iQmXwiRd5+A52Nyyg5cD/qLl9sQzjHdey1UTi6NsLWz2FmTmIzI/Rj4/KOODPZ1xR6ONFER+pmMl2iIM0I4t8vTmVGWJBtcU2keEfm+Q7TRbBtHQKBg2K2t7xNciK5hrDD2bfSw21YIBzNC+Pg46HKWqMN0q9JbbZL20NzzArqql2PLsFer9WX6oLKHV4RE1NWp5chUMSixefqH0Kg6UdmNPGmBJfWliQN+cCiQvBzJ164Zs/1w5D1hKjOrYxZeIbk3Jk8/g6GED6eUwBeWMeuyGVJUdSUQ2low37si5RN1t3RcgZuL5ij9woLK2lgBL2D2mQS8ZB0fo5G/UigTYs9112gFOdAfUAOEOcmIkIb46/NOv890Bi1Jj1ejOqFNYlTuKs0Xw0+kyepi+1VatuMLZK5Fu2+RTXeZGjl+6SOM6Y2oM22Txb4sxdkIKkTFUGce4w3xesVRGCCKT1O9uEFCZQ7HCVlK6qbcxXP8ghKDGeuj0A=
+    on:
+      tags: true
+      repo: thecasualcoder/gg
+      condition: $TRAVIS_RUST_VERSION = stable && $TARGET != ""
