@@ -1,0 +1,42 @@
+language: rust
+sudo: required
+rust:
+- beta
+- nightly
+- 1.36.0
+env:
+  global:
+  - PROJECT_NAME=gg
+matrix:
+  allow_failures:
+  - rust: nightly
+  fast_finish: true
+  include:
+  - os: linux
+    rust: stable
+    env: TARGET=x86_64-linux
+  - os: osx
+    rust: stable
+    env: TARGET=x86_64-darwin
+script:
+- date
+- cargo build --all
+- cargo test --all
+before_deploy:
+- cargo build --release
+- mv ./target/release/gg ./
+- tar cvfz $PROJECT_NAME-$TRAVIS_TAG-$TARGET.tar.gz ./gg
+- PREVIOUS_TAG=$(git tag | tail -2 | head -1)
+- echo 'Changelog:'
+- git log ${PREVIOUS_TAG}..${TRAVIS_TAG} --oneline
+- export GITHUB_RELEASE_NAME="v${TRAVIS_TAG}"
+deploy:
+  provider: releases
+  api_key:
+    secure: vjjx8QtMtCfxN4j0hRKQTw/qR3uZtiyreVz9A2coP8tuPqsFSTuDGOmMaL8/p9PDuMjSsj9ThQax3sLle46Y8VcnwiygcWLZB8kqdCEYtJxUwTUBsJ6L2At1KLHSYVIyyCuJQ8fI5zD7RlicfvxOkQToC/fyqseI1qoDP9UBj/qGGJbJRIbGHSEbiir1kNPhZsFDlqoSueAHG3aEwD1ZD68Qeh5a+D3oJki07w2XIdhHcBQmls/YvP+f7tjY1cDe/MjE/OE2HLOD039TuRGE97fn6/+UFDcaEVxhH/8E7JchQYEozruVyEXuL8GyXJCJPKi07pUSQQWZL10y9torEOIO8B1J7UwE3+cZ+gyjHtVyOkaUq+fcMhpQrX2RI44L9xQWaxYm7lTn1a9hs2ZtcMTz4wCUbp+sXAD9c5uhLGFncS7M0DKzKe1VINOqOallINUi1LOT4en9fQAT6C/h9IYcNiw1RKecDzhCx39a1ciOoulc8n1CDkAUVphvwwYSB5is2P/paKnCLhcExLtj/48MLQ322McW0GBXJon6pz2IVO+iTBZdO3dyursZxji0RPTt76M6uYyXMfMwYBhwOA6pef3ecHftb7WofH0Z0QvtoDcVucisJFlOrNOEpMwhXx5miQazHFYsLNVFrrKKfNla/3XEDa9ekeGH1YebVrI=
+  file: '$PROJECT_NAME-$TRAVIS_TAG-$TARGET.tar.gz'
+  skip_cleanup: true
+  on:
+    tags: true
+    repo: thecasualcoder/gg
+    condition: $TRAVIS_RUST_VERSION = stable && $TARGET != ""
