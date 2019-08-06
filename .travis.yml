@@ -21,7 +21,6 @@ matrix:
 script:
 - date
 - cargo build --all
-- cargo test --all
 before_deploy:
 - cargo build --release
 - mv ./target/release/gg ./
