@@ -1,7 +1,6 @@
 language: rust
 sudo: required
 rust:
-- beta
 - nightly
 - 1.36.0
 env:
@@ -20,7 +19,7 @@ matrix:
     env: TARGET=x86_64-darwin
 script:
 - date
-- cargo build --all
+- echo "cargo test"
 before_deploy:
 - cargo build --release
 - ls
