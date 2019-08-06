@@ -23,7 +23,8 @@ script:
 - cargo build --all
 before_deploy:
 - cargo build --release
-- mv ./target/release/gg ./
+- ls
+- mv ./target/release/gg .
 - tar cvfz $PROJECT_NAME-$TRAVIS_TAG-$TARGET.tar.gz ./gg
 - PREVIOUS_TAG=$(git tag | tail -2 | head -1)
 - echo 'Changelog:'
