@@ -21,8 +21,8 @@ script:
 - date
 - echo "cargo test"
 before_deploy:
+- git clean -fd .
 - cargo build --release
-- ls
 - mv ./target/release/gg .
 - tar cvfz $PROJECT_NAME-$TRAVIS_TAG-$TARGET.tar.gz ./gg
 - PREVIOUS_TAG=$(git tag | tail -2 | head -1)
