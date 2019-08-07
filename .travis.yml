@@ -42,6 +42,7 @@ deploy:
   - provider: cargo
     token:
       secure: I2EkMJeIMaMm9MpgYK1h4Bv0qFQb2MgAEdEo4YyPmqM8SolPv1/wk/RTFmBGbYzIdh+yQC5p2p+ap2cVVmuBaDoP1r50Jo+28m2vbo2+NnHntM7EsTSkyJHJG//NsMqaIyyR9+o8VyYb8JgAXErP8aLCqrIhurwbf2Qq8O/NSD3axgSGB6y63htOQ2iQmXwiRd5+A52Nyyg5cD/qLl9sQzjHdey1UTi6NsLWz2FmTmIzI/Rj4/KOODPZ1xR6ONFER+pmMl2iIM0I4t8vTmVGWJBtcU2keEfm+Q7TRbBtHQKBg2K2t7xNciK5hrDD2bfSw21YIBzNC+Pg46HKWqMN0q9JbbZL20NzzArqql2PLsFer9WX6oLKHV4RE1NWp5chUMSixefqH0Kg6UdmNPGmBJfWliQN+cCiQvBzJ164Zs/1w5D1hKjOrYxZeIbk3Jk8/g6GED6eUwBeWMeuyGVJUdSUQ2low37si5RN1t3RcgZuL5ij9woLK2lgBL2D2mQS8ZB0fo5G/UigTYs9112gFOdAfUAOEOcmIkIb46/NOv890Bi1Jj1ejOqFNYlTuKs0Xw0+kyepi+1VatuMLZK5Fu2+RTXeZGjl+6SOM6Y2oM22Txb4sxdkIKkTFUGce4w3xesVRGCCKT1O9uEFCZQ7HCVlK6qbcxXP8ghKDGeuj0A=
+    skip_cleanup: true
     on:
       tags: true
       repo: thecasualcoder/gg
