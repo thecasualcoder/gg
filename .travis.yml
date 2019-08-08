@@ -21,7 +21,7 @@ script:
 - date
 - echo "cargo test"
 before_deploy:
-- git clean -fd .
+- git clean -fdx .
 - cargo build --release
 - mv ./target/release/gg .
 - tar cvfz $PROJECT_NAME-$TRAVIS_TAG-$TARGET.tar.gz ./gg
