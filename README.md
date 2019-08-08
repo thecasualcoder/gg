@@ -6,6 +6,13 @@ A tool to manage multiple git repositories
 
 ##### Installation
 
+Using Brew:
+
+```bash
+brew tap thecasualcoder/stable
+brew install gg
+```
+
 Using cargo:
 ```bash
 git clone https://github.com/thecasualcoder/gg.git
