@@ -4,6 +4,7 @@ use clap::ArgMatches;
 pub enum InputCommand {
     Status,
     Create,
+    Fetch,
     Error,
 }
 
@@ -12,6 +13,7 @@ impl InputCommand {
         match *self {
             InputCommand::Status => "status",
             InputCommand::Create => "create",
+            InputCommand::Fetch => "fetch",
             _ => "unknown command"
         }
     }
@@ -34,6 +36,11 @@ impl<'a> InputArgs<'a> {
         } else if subcommand_name == InputCommand::Create.as_str() {
             InputArgs {
                 input_command: InputCommand::Create,
+                arg_matches: matches.to_owned(),
+            }
+        } else if subcommand_name == InputCommand::Fetch.as_str() {
+            InputArgs {
+                input_command: InputCommand::Fetch,
                 arg_matches: matches.to_owned(),
             }
         } else {
