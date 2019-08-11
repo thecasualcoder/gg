@@ -47,7 +47,7 @@ fn process_directories(path: &str) -> Result<(), Box<dyn Error>> {
     let directory = WalkDir::new(path);
 
     for entry in directory
-        .follow_links(true)
+        .follow_links(false)
         .contents_first(true)
         .same_file_system(true)
         {
