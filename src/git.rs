@@ -1,5 +1,5 @@
-use git2::{Error, Statuses};
+use git2::Error;
 
 pub trait GitAction {
-    fn git_action(&mut self) -> Result<Statuses, Error>;
+    fn git_action(&mut self) -> Result<(), Error>;
 }
