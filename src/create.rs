@@ -6,7 +6,9 @@ use std::path::Path;
 
 use clap::{App, Arg, ArgMatches, SubCommand};
 use git2::build::RepoBuilder;
+use git2::Error as GitError;
 use reqwest::{Client, RequestBuilder};
+use crate::git::GitAction;
 
 pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("create")
@@ -62,17 +64,8 @@ pub fn create(args: &ArgMatches) {
         process::exit(1);
     });
 
-    let result = RepoBuilder::new()
-        .clone(remote_url.as_str(), Path::new(path));
-
-    match result {
-        Ok(_) => {
-            println!("Created repo at {} and cloned locally at {}", remote_url, path);
-        }
-        Err(e) => {
-            println!("Failed to clone repo {}, err: {}", remote_url, e);
-        }
-    }
+    let mut clone = GitClone { remote_url: remote_url.as_str(), local_path: Path::new(path) };
+    clone.git_action().expect(format!("Failed to clone repo {}, ", remote_url).as_str());
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -81,7 +74,6 @@ enum GitPlatform {
 }
 
 impl GitPlatform {
-
     fn from_str(platform: &str) -> GitPlatform {
         match platform {
             "github" => GitPlatform::Github,
@@ -136,4 +128,19 @@ fn create_remote(token: String, platform: &str, repo_name: &str) -> Result<Strin
         repo_name: String::from(repo_name),
     };
     remote_repo.create()
+}
+
+pub struct GitClone<'a> {
+    remote_url: &'a str,
+    local_path: &'a Path,
+}
+
+impl<'a> GitAction for GitClone<'a> {
+    fn git_action(&mut self) -> Result<(), GitError> {
+        RepoBuilder::new()
+            .clone(self.remote_url, self.local_path)?;
+        println!("Created repo at {} and cloned locally at {:#?}", self.remote_url, self.local_path);
+
+        Ok(())
+    }
 }
