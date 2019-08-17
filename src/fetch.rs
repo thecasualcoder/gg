@@ -87,39 +87,42 @@ fn fetch_repo<'a>(repo: Repository, directory_name: Option<&str>) -> Result<(), 
         // progress.
         let mut fo = FetchOptions::new();
         fo.remote_callbacks(cb);
-        remote.download(&[], Some(&mut fo))?;
-
-        {
-            // If there are local objects (we got a thin pack), then tell the user
-            // how many objects we saved from having to cross the network.
-            let stats = remote.stats();
-            if stats.local_objects() > 0 {
-                println!(
-                    "\rReceived {}/{} objects in {} bytes (used {} local \
+        match remote.download(&[], Some(&mut fo)) {
+            Err(e) => {
+                print!("Failed with error: {}", e.message())
+            }
+            Ok(_) => {
+                // If there are local objects (we got a thin pack), then tell the user
+                // how many objects we saved from having to cross the network.
+                let stats = remote.stats();
+                if stats.local_objects() > 0 {
+                    print!(
+                        "Received {}/{} objects in {} bytes (used {} local \
                  objects)",
-                    stats.indexed_objects(),
-                    stats.total_objects(),
-                    stats.received_bytes(),
-                    stats.local_objects()
-                );
-            } else {
-                println!(
-                    "\rReceived {}/{} objects in {} bytes",
-                    stats.indexed_objects(),
-                    stats.total_objects(),
-                    stats.received_bytes()
-                );
+                        stats.indexed_objects(),
+                        stats.total_objects(),
+                        stats.received_bytes(),
+                        stats.local_objects()
+                    );
+                } else {
+                    print!(
+                        "Received {}/{} objects in {} bytes",
+                        stats.indexed_objects(),
+                        stats.total_objects(),
+                        stats.received_bytes()
+                    );
+                }
+                // Disconnect the underlying connection to prevent from idling.
+                remote.disconnect();
+
+
+                // Update the references in the remote's namespace to point to the right
+                // commits. This may be needed even if there was no packfile to download,
+                // which can happen e.g. when the branches have been changed but all the
+                // needed objects are available locally.
+                remote.update_tips(None, true, AutotagOption::Unspecified, None)?;
             }
         }
-
-        // Disconnect the underlying connection to prevent from idling.
-        remote.disconnect();
-
-        // Update the references in the remote's namespace to point to the right
-        // commits. This may be needed even if there was no packfile to download,
-        // which can happen e.g. when the branches have been changed but all the
-        // needed objects are available locally.
-        remote.update_tips(None, true, AutotagOption::Unspecified, None)?;
     } else {
         println!("remote named origin not found for {}", directory_name.unwrap());
     }
@@ -127,6 +130,7 @@ fn fetch_repo<'a>(repo: Repository, directory_name: Option<&str>) -> Result<(), 
 }
 
 pub fn git_credentials_callback(_user: &str, _user_from_url: Option<&str>, _cred: git2::CredentialType)
+                                -> Result<git2::Cred, git2::Error> {
     match std::env::var("HOME") {
         Ok(home) => {
             let path = format!("{}/.ssh/id_rsa", home);
