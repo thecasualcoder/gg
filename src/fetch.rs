@@ -2,8 +2,11 @@ use std::env::current_dir;
 use std::error::Error;
 
 use clap::{App, Arg, ArgMatches, SubCommand};
-use git2::{AutotagOption, FetchOptions, RemoteCallbacks, Repository};
+use git2::{Error as GitError, Cred, CredentialType, AutotagOption, FetchOptions, Remote,
+           RemoteCallbacks, Repository};
 use walkdir::{DirEntry, WalkDir};
+
+use crate::git::GitAction;
 
 pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("fetch")
@@ -58,8 +61,8 @@ fn process_directory(dir: DirEntry) -> Result<(), Box<dyn Error>> {
     if dir.file_name().eq(".git") {
         match dir.path().parent() {
             Some(dir) => {
-                let path = Repository::open(dir)?;
-                fetch_repo(path, dir.to_str())?;
+                let repo = Repository::open(dir)?;
+                fetch_repo(repo)?;
             }
             None => {}
         }
@@ -67,34 +70,62 @@ fn process_directory(dir: DirEntry) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn fetch_repo<'a>(repo: Repository, directory_name: Option<&str>) -> Result<(), Box<dyn Error>> {
+fn fetch_repo<'a>(repo: Repository) -> Result<(), Box<dyn Error>> {
+    let path = repo.path().parent().expect("Failed to get path from repo");
     let remotes = repo.remotes()?;
+
     // TODO: handle all remotes
     if remotes.iter().any(|remote| remote == Some("origin")) {
         let remote = "origin";
+        print!("\nFetching {} for {:#?} -> ", remote, path);
 
-        // Figure out whether it's a named remote or a URL
-        print!("\nFetching {} for {} -> ", remote, directory_name.unwrap());
         let mut cb = RemoteCallbacks::new();
-        let mut remote = repo
+
+        let remote = repo
             .find_remote(remote)
             .or_else(|_| repo.remote_anonymous(remote))?;
 
         cb.credentials(git_credentials_callback);
 
-        // Download the packfile and index it. This function updates the amount of
-        // received data and the indexer stats which lets you inform the user about
-        // progress.
         let mut fo = FetchOptions::new();
         fo.remote_callbacks(cb);
-        match remote.download(&[], Some(&mut fo)) {
+
+        let mut fetch = GitFetch { remote: remote, fetch_options: fo };
+        fetch.git_action()?
+    } else {
+        println!("remote named origin not found for {:#?}", path);
+    }
+    return Ok(());
+}
+
+pub fn git_credentials_callback(_user: &str, _user_from_url: Option<&str>, _cred: CredentialType)
+                                -> Result<Cred, GitError> {
+    match std::env::var("HOME") {
+        Ok(home) => {
+            let path = format!("{}/.ssh/id_rsa", home);
+            let credentials_path = std::path::Path::new(&path);
+            match credentials_path.exists() {
+                true => Cred::ssh_key("git", None, credentials_path, None),
+                false => Err(GitError::from_str(&format!("unable to get key from {}", path))),
+            }
+        }
+        Err(_) => Err(GitError::from_str("unable to get env variable HOME")),
+    }
+}
+
+pub struct GitFetch<'a> {
+    remote: Remote<'a>,
+    fetch_options: FetchOptions<'a>,
+}
+
+impl<'a> GitAction for GitFetch<'a> {
+    fn git_action(&mut self) -> Result<(), GitError> {
+        match self.remote.download(&[], Some(&mut self.fetch_options)) {
             Err(e) => {
                 print!("Failed with error: {}", e.message())
             }
             Ok(_) => {
-                // If there are local objects (we got a thin pack), then tell the user
-                // how many objects we saved from having to cross the network.
-                let stats = remote.stats();
+                let stats = self.remote.stats();
                 if stats.local_objects() > 0 {
                     print!(
                         "Received {}/{} objects in {} bytes (used {} local \
@@ -112,35 +143,11 @@ fn fetch_repo<'a>(repo: Repository, directory_name: Option<&str>) -> Result<(), 
                         stats.received_bytes()
                     );
                 }
-                // Disconnect the underlying connection to prevent from idling.
-                remote.disconnect();
-
-
-                // Update the references in the remote's namespace to point to the right
-                // commits. This may be needed even if there was no packfile to download,
-                // which can happen e.g. when the branches have been changed but all the
-                // needed objects are available locally.
-                remote.update_tips(None, true, AutotagOption::Unspecified, None)?;
+                self.remote.disconnect();
+                self.remote.update_tips(None, true, AutotagOption::Unspecified, None)?;
             }
         }
-    } else {
-        println!("remote named origin not found for {}", directory_name.unwrap());
-    }
-    return Ok(());
-}
-
-pub fn git_credentials_callback(_user: &str, _user_from_url: Option<&str>, _cred: git2::CredentialType)
-                                -> Result<git2::Cred, git2::Error> {
-    match std::env::var("HOME") {
-        Ok(home) => {
-            let path = format!("{}/.ssh/id_rsa", home);
-            let credentials_path = std::path::Path::new(&path);
-            match credentials_path.exists() {
-                true => git2::Cred::ssh_key("git", None, credentials_path, None),
-                false => Err(git2::Error::from_str(&format!("unable to get key from {}", path))),
-            }
-        }
-        Err(_) => Err(git2::Error::from_str("unable to get env variable HOME")),
+        Ok(())
     }
 }
 
