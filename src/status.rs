@@ -58,27 +58,19 @@ fn process_directory(dir: DirEntry) -> Result<(), Box<dyn Error>> {
     if dir.file_name().eq(".git") {
         match dir.path().parent() {
             Some(dir) => {
-                let path = Repository::open(dir)?;
-                process_git_directory(path)?;
+                let repo = Repository::open(dir)?;
+                let mut opts = StatusOptions::new();
+                opts.include_ignored(true)
+                    .include_untracked(true)
+                    .recurse_untracked_dirs(false)
+                    .exclude_submodules(false);
+                let mut gst = GitStatus { repo: repo, opts: &mut opts };
+                gst.git_action()?
             }
             None => {}
         }
     }
     Ok(())
-}
-
-fn process_git_directory<'a>(repo: Repository) -> Result<(), Box<dyn Error>> {
-    let mut opts = StatusOptions::new();
-    opts.include_ignored(true)
-        .include_untracked(true)
-        .recurse_untracked_dirs(false)
-        .exclude_submodules(false);
-    Ok(git_status(repo, &mut opts)?)
-}
-
-fn git_status<'a>(repo: Repository, opts: &mut StatusOptions) -> Result<(), Box<dyn Error>> {
-    let mut gst = GitStatus { repo: repo, opts };
-    Ok(gst.git_action()?)
 }
 
 pub struct GitStatus<'a> {
