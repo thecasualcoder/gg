@@ -1,11 +1,9 @@
 use std::env::current_dir;
+use std::error::Error;
 
 use clap::{App, Arg, ArgMatches, SubCommand};
-use git2::{Repository, RemoteCallbacks, FetchOptions, AutotagOption};
+use git2::{AutotagOption, FetchOptions, RemoteCallbacks, Repository};
 use walkdir::{DirEntry, WalkDir};
-
-use std::error::Error;
-use std::io::{stdout, Write};
 
 pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("fetch")
@@ -76,53 +74,13 @@ fn fetch_repo<'a>(repo: Repository, directory_name: Option<&str>) -> Result<(), 
         let remote = "origin";
 
         // Figure out whether it's a named remote or a URL
-        println!("Fetching {} for {}", remote, directory_name.unwrap());
+        print!("\nFetching {} for {} -> ", remote, directory_name.unwrap());
         let mut cb = RemoteCallbacks::new();
         let mut remote = repo
             .find_remote(remote)
             .or_else(|_| repo.remote_anonymous(remote))?;
-        cb.sideband_progress(|data| {
-            print!("remote: {:?}", data);
-            stdout().flush().unwrap();
-            true
-        });
 
         cb.credentials(git_credentials_callback);
-
-        // This callback gets called for each remote-tracking branch that gets
-        // updated. The message we output depends on whether it's a new one or an
-        // update.
-        cb.update_tips(|refname, a, b| {
-            if a.is_zero() {
-                println!("[new]     {:20} {}", b, refname);
-            } else {
-                println!("[updated] {:10}..{:10} {}", a, b, refname);
-            }
-            true
-        });
-
-        // Here we show processed and total objects in the pack and the amount of
-        // received data. Most frontends will probably want to show a percentage and
-        // the download rate.
-        cb.transfer_progress(|stats| {
-            if stats.received_objects() == stats.total_objects() {
-                print!(
-                    "Resolving deltas {}/{}\r",
-                    stats.indexed_deltas(),
-                    stats.total_deltas()
-                );
-            } else if stats.total_objects() > 0 {
-                print!(
-                    "Received {}/{} objects ({}) in {} bytes\r",
-                    stats.received_objects(),
-                    stats.total_objects(),
-                    stats.indexed_objects(),
-                    stats.received_bytes()
-                );
-            }
-            std::io::stdout().flush().unwrap();
-            true
-        });
 
         // Download the packfile and index it. This function updates the amount of
         // received data and the indexer stats which lets you inform the user about
@@ -168,11 +126,7 @@ fn fetch_repo<'a>(repo: Repository, directory_name: Option<&str>) -> Result<(), 
     return Ok(());
 }
 
-pub fn git_credentials_callback(
-    _user: &str,
-    _user_from_url: Option<&str>,
-    _cred: git2::CredentialType,
-) -> Result<git2::Cred, git2::Error> {
+pub fn git_credentials_callback(_user: &str, _user_from_url: Option<&str>, _cred: git2::CredentialType)
     match std::env::var("HOME") {
         Ok(home) => {
             let path = format!("{}/.ssh/id_rsa", home);
