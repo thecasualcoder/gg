@@ -21,7 +21,7 @@ pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
 pub fn status(matches: &ArgMatches) {
     match matches.value_of("PATH") {
         Some(path) => process_directories(path).unwrap_or_else(|err| {
-            println!("Failed getting status for path {}, error: {}", path, err);
+            println!("{} {}: {}", "Failed getting status for path".red(), path.red(), err);
             process::exit(1);
         }),
         None => {
@@ -29,13 +29,19 @@ pub fn status(matches: &ArgMatches) {
                 Ok(dir) => {
                     match dir.to_str() {
                         Some(dir) => process_directories(dir).unwrap_or_else(|err| {
-                            println!("Failed to get status for current directory, error: {}", err);
+                            println!("{} {}", "Failed to get status for current directory: ".red(), err);
                             process::exit(1);
                         }),
-                        None => panic!("Error in converting current directory to string")
+                        None => {
+                            println!("{}", "Error in converting current directory to string".red());
+                            process::exit(1);
+                        }
                     }
                 }
-                Err(err) => panic!("Error: {}", err),
+                Err(err) => {
+                    println!("{} {}", "Error accessing current_dir:".red(), err);
+                    process::exit(1);
+                }
             }
         }
     };
@@ -67,7 +73,9 @@ fn process_directory(dir: DirEntry) -> Result<(), Box<dyn Error>> {
                 let mut gst = GitStatus { repo: repo, opts: &mut opts };
                 gst.git_action()?
             }
-            None => {}
+            None => {
+                println!("{} {:#?}", "error accessing parent directory of".red(), dir.path())
+            }
         }
     }
     Ok(())

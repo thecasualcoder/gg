@@ -5,9 +5,11 @@ use std::error::Error;
 use std::path::Path;
 
 use clap::{App, Arg, ArgMatches, SubCommand};
+use colored::*;
 use git2::build::RepoBuilder;
 use git2::Error as GitError;
 use reqwest::{Client, RequestBuilder};
+
 use crate::git::GitAction;
 
 pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
@@ -51,7 +53,8 @@ pub fn create(args: &ArgMatches) {
     let mut token = String::from(args.value_of("token").unwrap_or(""));
     if token == "" {
         if env::var("GITHUB_TOKEN").is_err() {
-            panic!("GITHUB_TOKEN is missing. Set this as a flag using -t or as an env variable")
+            println!("{}", "GITHUB_TOKEN is missing. Set this as a flag using -t or as an env variable".red());
+            process::exit(1)
         } else {
             token = env::var("GITHUB_TOKEN").unwrap()
         }
@@ -60,7 +63,7 @@ pub fn create(args: &ArgMatches) {
     let platform = args.value_of("platform").unwrap();
 
     let remote_url = create_remote(token, platform, repo_name).unwrap_or_else(|err| {
-        println!("Failed creating a remote repo: {}", err);
+        println!("{} {}", "Failed creating a remote repo:".red(), err);
         process::exit(1);
     });
 
@@ -78,7 +81,7 @@ impl GitPlatform {
         match platform {
             "github" => GitPlatform::Github,
             _ => {
-                panic!("Unsupported platform")
+                panic!("{}", "Unsupported platform".red())
             }
         }
     }
@@ -113,7 +116,7 @@ impl GitRemoteRepo {
         let errors = returned_json["errors"].as_array().unwrap_or(&Vec::new()).to_owned();
         if errors.len() > 0 {
             let message = errors[0].get("message").expect("Failed to get error message").to_owned();
-            println!("Error message: {:#?}", message);
+            println!("{} {:#?}", "Error message:".red(), message.to_string());
             process::exit(1)
         }
         let url = returned_json["clone_url"].as_str().expect("Failed to get remote url from response");
@@ -139,7 +142,8 @@ impl<'a> GitAction for GitClone<'a> {
     fn git_action(&mut self) -> Result<(), GitError> {
         RepoBuilder::new()
             .clone(self.remote_url, self.local_path)?;
-        println!("Created repo at {} and cloned locally at {:#?}", self.remote_url, self.local_path);
+        println!("{} {} {} {:#?}", "Created repo at".green(), self.remote_url.green(), "and cloned locally at".green(),
+                 self.local_path.as_os_str());
 
         Ok(())
     }

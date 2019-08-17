@@ -1,12 +1,13 @@
 use std::env::current_dir;
 use std::error::Error;
-
+use colored::*;
 use clap::{App, Arg, ArgMatches, SubCommand};
 use git2::{Error as GitError, Cred, CredentialType, AutotagOption, FetchOptions, Remote,
            RemoteCallbacks, Repository};
 use walkdir::{DirEntry, WalkDir};
 
 use crate::git::GitAction;
+use std::process;
 
 pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("fetch")
@@ -19,26 +20,28 @@ pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
 
 pub fn fetch(matches: &ArgMatches) {
     match matches.value_of("PATH") {
-        Some(path) => {
-            match process_directories(path) {
-                Ok(_) => {}
-                Err(err) => panic!("Error: {}", err),
-            }
-        }
+        Some(path) => process_directories(path).unwrap_or_else(|err| {
+            println!("{} {}: {}", "Failed fetching for".red(), path.red(), err);
+            process::exit(1);
+        }),
         None => {
             match current_dir() {
                 Ok(dir) => {
                     match dir.to_str() {
-                        Some(dir) => {
-                            match process_directories(dir) {
-                                Ok(_) => {}
-                                Err(err) => panic!("Error: {}", err),
-                            }
+                        Some(dir) => process_directories(dir).unwrap_or_else(|err| {
+                            println!("{} {}", "Failed fetching for".red(), err);
+                            process::exit(1);
+                        }),
+                        None => {
+                            println!("{}", "Error in converting current directory to string".red());
+                            process::exit(1);
                         }
-                        None => panic!("Error in converting current directory to string")
                     }
                 }
-                Err(err) => panic!("Error: {}", err),
+                Err(err) => {
+                    println!("{} {}", "Error accessing current_dir:".red(), err);
+                    process::exit(1);
+                }
             }
         }
     };
@@ -64,7 +67,9 @@ fn process_directory(dir: DirEntry) -> Result<(), Box<dyn Error>> {
                 let repo = Repository::open(dir)?;
                 fetch_repo(repo)?;
             }
-            None => {}
+            None => {
+                println!("{} {:#?}", "error accessing parent directory of".red(), dir.path())
+            }
         }
     }
     Ok(())
@@ -77,7 +82,7 @@ fn fetch_repo<'a>(repo: Repository) -> Result<(), Box<dyn Error>> {
     // TODO: handle all remotes
     if remotes.iter().any(|remote| remote == Some("origin")) {
         let remote = "origin";
-        print!("\nFetching {} for {:#?} -> ", remote, path);
+        print!("{} {} {} {:#?} -> ", "\nFetching".blue(), remote.blue(), "for".blue(), path);
 
         let mut cb = RemoteCallbacks::new();
 
@@ -93,7 +98,7 @@ fn fetch_repo<'a>(repo: Repository) -> Result<(), Box<dyn Error>> {
         let mut fetch = GitFetch { remote: remote, fetch_options: fo };
         fetch.git_action()?
     } else {
-        println!("remote named origin not found for {:#?}", path);
+        println!("{} {:#?}", "remote named origin not found for".red(), path);
     }
     return Ok(());
 }
@@ -122,25 +127,30 @@ impl<'a> GitAction for GitFetch<'a> {
     fn git_action(&mut self) -> Result<(), GitError> {
         match self.remote.download(&[], Some(&mut self.fetch_options)) {
             Err(e) => {
-                print!("Failed with error: {}", e.message())
+                print!("{} {}", "Failed with error:".red(), e.message());
             }
             Ok(_) => {
                 let stats = self.remote.stats();
                 if stats.local_objects() > 0 {
-                    print!(
-                        "Received {}/{} objects in {} bytes (used {} local \
-                 objects)",
-                        stats.indexed_objects(),
-                        stats.total_objects(),
-                        stats.received_bytes(),
-                        stats.local_objects()
+                    print!("{} {}/{} {} {} {} {} {}",
+                           "Received".green(),
+                           stats.indexed_objects(),
+                           stats.total_objects(),
+                           "objects in".green(),
+                           stats.received_bytes(),
+                           " bytes (used ".green(),
+                           stats.local_objects(),
+                           "local objects)".green()
                     );
                 } else {
                     print!(
-                        "Received {}/{} objects in {} bytes",
+                        "{} {}/{} {} {} {}",
+                        "Received".green(),
                         stats.indexed_objects(),
                         stats.total_objects(),
-                        stats.received_bytes()
+                        "objects in".green(),
+                        stats.received_bytes(),
+                        "bytes".green()
                     );
                 }
                 self.remote.disconnect();
