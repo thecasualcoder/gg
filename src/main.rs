@@ -5,7 +5,7 @@ extern crate colored;
 extern crate git2;
 extern crate walkdir;
 
-use clap::{App, AppSettings};
+use clap::{crate_version, App, AppSettings};
 
 mod input_args;
 mod status;
@@ -16,7 +16,7 @@ mod git;
 fn main() {
     let app = App::new("Git Governance")
         .setting(AppSettings::ArgRequiredElseHelp)
-        .version("1.0")
+        .version(crate_version!())
         .subcommand(status::sub_command())
         .subcommand(create::sub_command())
         .subcommand(fetch::sub_command());
