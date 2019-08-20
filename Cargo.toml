@@ -1,5 +1,5 @@
 [package]
-name = "gg"
+name = "git-governance"
 version = "0.1.0"
 authors = ["Ninan John <jninan@thoughtworks.com>", "Dinesh B<dineshudt17@gmail.com>"]
 edition = "2018"
@@ -10,6 +10,10 @@ readme = "README.md"
 repository = "https://github.com/thecasualcoder/gg"
 keywords = ["git", "gg", "multi", "goverance"]
 categories = ["command-line-utilities"]
+
+[[bin]]
+name="gg"
+path = "src/main.rs"
 
 [badges]
 travis-ci = { repository = "thecasualcoder/gg" }
