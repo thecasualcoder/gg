@@ -19,7 +19,7 @@ matrix:
     env: TARGET=x86_64-darwin
 script:
 - date
-- echo "cargo test"
+- cargo test
 before_deploy:
 - git clean -fdx .
 - cargo build --release
