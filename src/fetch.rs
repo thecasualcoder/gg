@@ -1,13 +1,16 @@
 use std::env::current_dir;
 use std::error::Error;
-use colored::*;
+use std::process;
+
 use clap::{App, Arg, ArgMatches, SubCommand};
-use git2::{Error as GitError, Cred, CredentialType, AutotagOption, FetchOptions, Remote,
+use colored::*;
+use git2::{AutotagOption, Cred, CredentialType, Error as GitError, FetchOptions, Remote,
            RemoteCallbacks, Repository};
+use regex::Regex;
 use walkdir::{DirEntry, WalkDir};
 
 use crate::git::GitAction;
-use std::process;
+use std::path::Path;
 
 pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("fetch")
@@ -51,15 +54,32 @@ fn process_directories(path: &str) -> Result<(), Box<dyn Error>> {
     let directory = WalkDir::new(path);
 
     for entry in directory
+    let tree = WalkDir::new(path)
         .follow_links(false)
         .contents_first(true)
         .same_file_system(true)
-        {
-            process_directory(entry?)?
-        }
+        .into_iter()
+        .filter_entry(|e| check_filter(e, &filter_list));
+
+    for entry in tree {
+//        println!("{:#?}", entry?.file_name());
+        process_directory(entry?)?
+    }
     Ok(())
 }
 
+fn check_filter(entry: &DirEntry) -> bool {
+    entry
+        .path()
+        .to_str()
+        .map(|s| is_dir(s))
+        .unwrap_or(false)
+}
+
+fn is_dir(path: &str) -> bool {
+    let path = Path::new(path);
+    return path.is_dir();
+}
 fn process_directory(dir: DirEntry) -> Result<(), Box<dyn Error>> {
     if dir.file_name().eq(".git") {
         match dir.path().parent() {
