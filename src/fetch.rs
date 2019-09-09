@@ -53,13 +53,12 @@ pub fn fetch(matches: &ArgMatches) {
 fn process_directories(path: &str) -> Result<(), Box<dyn Error>> {
     let directory = WalkDir::new(path);
 
-    for entry in directory
     let tree = WalkDir::new(path)
         .follow_links(false)
         .contents_first(true)
         .same_file_system(true)
         .into_iter()
-        .filter_entry(|e| check_filter(e, &filter_list));
+        .filter_entry(|e| check_filter(e));
 
     for entry in tree {
 //        println!("{:#?}", entry?.file_name());
