@@ -8,6 +8,8 @@ use git2::{Error as GitError, Repository, StatusOptions};
 use walkdir::{DirEntry, WalkDir};
 
 use crate::git::GitAction;
+use regex::Regex;
+use std::path::Path;
 
 pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("status")
@@ -48,17 +50,33 @@ pub fn status(matches: &ArgMatches) {
 }
 
 fn process_directories(path: &str) -> Result<(), Box<dyn Error>> {
-    let directory = WalkDir::new(path);
-
-    for entry in directory
+    let tree = WalkDir::new(path)
         .follow_links(false)
         .contents_first(true)
         .same_file_system(true)
-        {
-            process_directory(entry?)?
-        }
+        .into_iter()
+        .filter_entry(|e| check_filter(e));
+
+    for entry in tree {
+//        println!("{:#?}", entry?.file_name());
+        process_directory(entry?)?
+    }
     Ok(())
 }
+
+fn check_filter(entry: &DirEntry) -> bool {
+    entry
+        .path()
+        .to_str()
+        .map(|s| is_dir(s))
+        .unwrap_or(false)
+}
+
+fn is_dir(path: &str) -> bool {
+    let path = Path::new(path);
+    return path.is_dir();
+}
+
 
 fn process_directory(dir: DirEntry) -> Result<(), Box<dyn Error>> {
     if dir.file_name().eq(".git") {
