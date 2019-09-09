@@ -8,7 +8,6 @@ use git2::{Error as GitError, Repository, StatusOptions};
 use walkdir::{DirEntry, WalkDir};
 
 use crate::git::GitAction;
-use regex::Regex;
 use std::path::Path;
 
 pub fn sub_command<'a, 'b>() -> App<'a, 'b> {

@@ -6,7 +6,6 @@ use clap::{App, Arg, ArgMatches, SubCommand};
 use colored::*;
 use git2::{AutotagOption, Cred, CredentialType, Error as GitError, FetchOptions, Remote,
            RemoteCallbacks, Repository};
-use regex::Regex;
 use walkdir::{DirEntry, WalkDir};
 
 use crate::git::GitAction;
@@ -51,8 +50,6 @@ pub fn fetch(matches: &ArgMatches) {
 }
 
 fn process_directories(path: &str) -> Result<(), Box<dyn Error>> {
-    let directory = WalkDir::new(path);
-
     let tree = WalkDir::new(path)
         .follow_links(false)
         .contents_first(true)
