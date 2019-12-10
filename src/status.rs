@@ -9,6 +9,8 @@ use walkdir::{DirEntry, WalkDir};
 
 use crate::git::GitAction;
 use std::path::Path;
+use crate::dir::DirectoryTreeOptions;
+use regex::Regex;
 
 pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("status")
@@ -19,9 +21,9 @@ pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
         )
 }
 
-pub fn status(matches: &ArgMatches) {
+pub fn status(matches: &ArgMatches, filter_list: Vec<Regex>) {
     match matches.value_of("PATH") {
-        Some(path) => process_directories(path).unwrap_or_else(|err| {
+        Some(path) => process_directories(path, filter_list).unwrap_or_else(|err| {
             println!("{} {}: {}", "Failed getting status for path".red(), path.red(), err);
             process::exit(1);
         }),
@@ -29,7 +31,7 @@ pub fn status(matches: &ArgMatches) {
             match current_dir() {
                 Ok(dir) => {
                     match dir.to_str() {
-                        Some(dir) => process_directories(dir).unwrap_or_else(|err| {
+                        Some(dir) => process_directories(dir, filter_list).unwrap_or_else(|err| {
                             println!("{} {}", "Failed to get status for current directory: ".red(), err);
                             process::exit(1);
                         }),
@@ -48,34 +50,27 @@ pub fn status(matches: &ArgMatches) {
     };
 }
 
-fn process_directories(path: &str) -> Result<(), Box<dyn Error>> {
+fn process_directories(path: &str, filter_list: Vec<Regex>) -> Result<(), Box<dyn Error>> {
+    let dir_tree_with_options = DirectoryTreeOptions {
+        filter_list: filter_list,
+        filter_hidden: true,
+    };
+
     let tree = WalkDir::new(path)
         .follow_links(false)
-        .contents_first(true)
+        .contents_first(false)
         .same_file_system(true)
         .into_iter()
-        .filter_entry(|e| check_filter(e));
+        .filter_entry(|e| {
+            dir_tree_with_options.should_filter(e).expect(format!("failed to filter for entry {:#?}", e).as_str())
+        });
 
     for entry in tree {
-//        println!("{:#?}", entry?.file_name());
+//        println!("{:#?}", entry)
         process_directory(entry?)?
     }
     Ok(())
 }
-
-fn check_filter(entry: &DirEntry) -> bool {
-    entry
-        .path()
-        .to_str()
-        .map(|s| is_dir(s))
-        .unwrap_or(false)
-}
-
-fn is_dir(path: &str) -> bool {
-    let path = Path::new(path);
-    return path.is_dir();
-}
-
 
 fn process_directory(dir: DirEntry) -> Result<(), Box<dyn Error>> {
     if dir.file_name().eq(".git") {
