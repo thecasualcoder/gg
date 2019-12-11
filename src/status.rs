@@ -8,7 +8,6 @@ use git2::{Error as GitError, Repository, StatusOptions};
 use walkdir::{DirEntry, WalkDir};
 
 use crate::git::GitAction;
-use std::path::Path;
 use crate::dir::DirectoryTreeOptions;
 use regex::Regex;
 
