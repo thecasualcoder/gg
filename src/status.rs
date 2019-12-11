@@ -17,13 +17,19 @@ pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
         .arg(Arg::with_name("PATH")
             .short("f")
             .takes_value(true)
-            .help("path at which to create the local repo")
+            .help("path at which to create the local repo"))
+        .arg(Arg::with_name("traverse-hidden")
+            .short("i")
+            .help("traverse through hidden directories also")
         )
 }
 
 pub fn status(matches: &ArgMatches, filter_list: Vec<Regex>) {
+    let filter_hidden = matches.is_present("traverse-hidden");
+    println!("filter_hidden: {}", filter_hidden);
+
     match matches.value_of("PATH") {
-        Some(path) => process_directories(path, filter_list).unwrap_or_else(|err| {
+        Some(path) => process_directories(path, filter_list, filter_hidden).unwrap_or_else(|err| {
             println!("{} {}: {}", "Failed getting status for path".red(), path.red(), err);
             process::exit(1);
         }),
@@ -31,7 +37,7 @@ pub fn status(matches: &ArgMatches, filter_list: Vec<Regex>) {
             match current_dir() {
                 Ok(dir) => {
                     match dir.to_str() {
-                        Some(dir) => process_directories(dir, filter_list).unwrap_or_else(|err| {
+                        Some(dir) => process_directories(dir, filter_list, filter_hidden).unwrap_or_else(|err| {
                             println!("{} {}", "Failed to get status for current directory: ".red(), err);
                             process::exit(1);
                         }),
@@ -50,10 +56,10 @@ pub fn status(matches: &ArgMatches, filter_list: Vec<Regex>) {
     };
 }
 
-fn process_directories(path: &str, filter_list: Vec<Regex>) -> Result<(), Box<dyn Error>> {
+fn process_directories(path: &str, filter_list: Vec<Regex>, filter_hidden: bool) -> Result<(), Box<dyn Error>> {
     let dir_tree_with_options = DirectoryTreeOptions {
         filter_list: filter_list,
-        filter_hidden: true,
+        filter_hidden: filter_hidden,
     };
 
     let tree = WalkDir::new(path)

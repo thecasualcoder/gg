@@ -18,13 +18,19 @@ pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
         .arg(Arg::with_name("PATH")
             .short("f")
             .takes_value(true)
-            .help("path at which to fetch the git repos")
+            .help("path at which to fetch the git repos"))
+        .arg(Arg::with_name("traverse-hidden")
+            .short("i")
+            .help("traverse through hidden directories also")
         )
 }
 
-pub fn fetch(matches: &ArgMatches, filter_list: Vec<Regex>) {
-    match matches.value_of("PATH") {
-        Some(path) => process_directories(path, filter_list).unwrap_or_else(|err| {
+pub fn fetch(args: &ArgMatches, filter_list: Vec<Regex>) {
+    let filter_hidden = args.is_present("traverse-hidden");
+    println!("filter_hidden: {}", filter_hidden);
+
+    match args.value_of("PATH") {
+        Some(path) => process_directories(path, filter_list, filter_hidden).unwrap_or_else(|err| {
             println!("{} {}: {}", "Failed fetching for".red(), path.red(), err);
             process::exit(1);
         }),
@@ -32,7 +38,7 @@ pub fn fetch(matches: &ArgMatches, filter_list: Vec<Regex>) {
             match current_dir() {
                 Ok(dir) => {
                     match dir.to_str() {
-                        Some(dir) => process_directories(dir, filter_list).unwrap_or_else(|err| {
+                        Some(dir) => process_directories(dir, filter_list, filter_hidden).unwrap_or_else(|err| {
                             println!("{} {}", "Failed fetching for".red(), err);
                             process::exit(1);
                         }),
@@ -52,11 +58,10 @@ pub fn fetch(matches: &ArgMatches, filter_list: Vec<Regex>) {
 }
 
 // Todo: Abstract this method so it will be used for all commands.
-fn process_directories(path: &str, filter_list: Vec<Regex>) -> Result<(), Box<dyn Error>> {
-// Todo: filter_hidden value should come from flag. It is currently hardcoded.
+fn process_directories(path: &str, filter_list: Vec<Regex>, filter_hidden: bool) -> Result<(), Box<dyn Error>> {
     let dir_tree_with_options = DirectoryTreeOptions {
         filter_list: filter_list,
-        filter_hidden: true,
+        filter_hidden: filter_hidden,
     };
 
     let tree = WalkDir::new(path)
