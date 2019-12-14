@@ -38,7 +38,8 @@ fn main() {
 
 
 fn create_filter_list() -> Result<Vec<Regex>, Box<dyn Error>> {
-    // Todo: filter list is hard coded for now. This should be set from a file. Sensible defaults can be added to it in code(.git, .DS_STORE, .idea, a lot of dot directories).
+    // Todo: The filter list is hard coded for now. This should be set from a file.
+    // Todo: Sensible defaults can be added to it in code(.git, .DS_STORE, .idea, a lot of dot directories).
     let mut filter_list = Vec::new();
     let re = Regex::new(r"^ignore/*")?;
     filter_list.push(re);

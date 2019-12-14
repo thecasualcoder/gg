@@ -1,7 +1,7 @@
 use std::error::Error;
 
 use regex::Regex;
-use walkdir::DirEntry;
+use walkdir::{DirEntry, WalkDir};
 
 pub struct DirectoryTreeOptions {
     pub filter_list: Vec<Regex>,
@@ -15,6 +15,24 @@ impl DirectoryTreeOptions {
             .to_str()
             .map(|file| entry.depth() == 0 || !file.starts_with("."))
             .unwrap_or(false)
+    }
+
+    pub fn process_directories<F: Fn(&DirEntry) -> Result<(), Box<dyn Error>>>(self, path: &str, process_fn: F) -> Result<(), Box<dyn Error>> {
+        WalkDir::new(path)
+            .follow_links(false)
+            .contents_first(false)
+            .same_file_system(true)
+            .into_iter()
+            .filter_entry(|e| {
+                self.should_filter(e).expect(format!("failed to filter for entry {:#?}", e).as_str())
+            })
+            .for_each(|e| {
+                if let Ok(e) = e {
+                    process_fn(&e).expect("processing failed");
+                }
+            });
+
+        Ok(())
     }
 
     pub fn should_filter(&self, entry: &DirEntry) -> Result<bool, Box<dyn Error>> {
@@ -33,6 +51,7 @@ impl DirectoryTreeOptions {
                 return Ok(false);
             }
         }
+
         return Ok(true);
     }
 }
