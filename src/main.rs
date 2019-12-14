@@ -30,7 +30,7 @@ fn main() {
 
     match args.input_command() {
         input_args::InputCommand::Status => status::status(args, filter_list),
-        input_args::InputCommand::Create => create::create(args.get_matches()),
+        input_args::InputCommand::Create => create::create(args),
         input_args::InputCommand::Fetch => fetch::fetch(args, filter_list),
         input_args::InputCommand::Error => {}
     }

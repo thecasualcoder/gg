@@ -33,7 +33,7 @@ pub fn fetch(args: InputArgs, filter_list: Vec<Regex>) {
         filter_hidden: filter_hidden,
     };
 
-    let root_path = args.get_root_path();
+    let root_path = args.get_root_path("PATH");
     let root = root_path.to_str().expect(format!("{}", "Error in converting directory to string".red()).as_str());
 
     dir_tree_with_options.process_directories(root, process_directory).unwrap_or_else(|err| {

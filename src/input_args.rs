@@ -63,8 +63,8 @@ impl<'a> InputArgs<'a> {
         &self.arg_matches
     }
 
-    pub fn get_root_path(&self) -> PathBuf {
-        match &self.arg_matches.value_of("PATH") {
+    pub fn get_root_path(&self, arg_name: &str) -> PathBuf {
+        match &self.arg_matches.value_of(arg_name) {
             Some(path) => { Path::new(path).to_path_buf() }
             None => {
                 current_dir().unwrap_or_else(|err| {

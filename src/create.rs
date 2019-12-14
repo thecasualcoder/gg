@@ -1,16 +1,16 @@
 use std::{env, process};
 use std::collections::HashMap;
-use std::env::current_dir;
 use std::error::Error;
 use std::path::Path;
 
-use clap::{App, Arg, ArgMatches, SubCommand};
+use clap::{App, Arg, SubCommand};
 use colored::*;
 use git2::build::RepoBuilder;
 use git2::Error as GitError;
 use reqwest::{Client, RequestBuilder};
 
 use crate::git::GitAction;
+use crate::input_args::InputArgs;
 
 pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("create")
@@ -30,27 +30,12 @@ pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
         )
 }
 
-pub fn create(args: &ArgMatches) {
-    let current_dir = current_dir()
-        .expect("Failed to get current directory");
+pub fn create(args: InputArgs) {
+    let matches = args.get_matches();
+    let root_path = args.get_root_path("repo_path");
+    let repo_name = root_path.to_str().expect(format!("{}", "Error in converting directory to string".red()).as_str());
 
-    let current_dir_path = current_dir
-        .to_str()
-        .expect("failed to convert current directory path to string");
-
-    let path = args.value_of("repo_path")
-        .unwrap_or(current_dir_path);
-
-    let repo_name = Path::new(path)
-        .file_name()
-        .expect("failed to get repo_name")
-        .to_str()
-        .expect("failed to convert path to string");
-
-    let path = args.value_of("repo_path")
-        .unwrap_or(current_dir_path);
-
-    let mut token = String::from(args.value_of("token").unwrap_or(""));
+    let mut token = String::from(matches.value_of("token").unwrap_or(""));
     if token == "" {
         if env::var("GITHUB_TOKEN").is_err() {
             println!("{}", "GITHUB_TOKEN is missing. Set this as a flag using -t or as an env variable".red());
@@ -60,14 +45,14 @@ pub fn create(args: &ArgMatches) {
         }
     }
 
-    let platform = args.value_of("platform").unwrap();
+    let platform = matches.value_of("platform").unwrap();
 
     let remote_url = create_remote(token, platform, repo_name).unwrap_or_else(|err| {
         println!("{} {}", "Failed creating a remote repo:".red(), err);
         process::exit(1);
     });
 
-    let mut clone = GitClone { remote_url: remote_url.as_str(), local_path: Path::new(path) };
+    let mut clone = GitClone { remote_url: remote_url.as_str(), local_path: root_path.as_path() };
     clone.git_action().expect(format!("Failed to clone repo {}, ", remote_url).as_str());
 }
 
