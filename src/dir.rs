@@ -35,7 +35,7 @@ impl DirectoryTreeOptions {
         Ok(())
     }
 
-    pub fn should_filter(&self, entry: &DirEntry) -> Result<bool, Box<dyn Error>> {
+    fn should_filter(&self, entry: &DirEntry) -> Result<bool, Box<dyn Error>> {
         let path_string = entry.path().to_str().expect("could not get path from the entry").trim_start_matches("./");
 
         if self.filter_hidden {

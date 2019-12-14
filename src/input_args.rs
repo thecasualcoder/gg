@@ -1,4 +1,8 @@
 use clap::ArgMatches;
+use std::path::{PathBuf, Path};
+use colored::*;
+use std::env::current_dir;
+use std::process;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum InputCommand {
@@ -57,5 +61,17 @@ impl<'a> InputArgs<'a> {
 
     pub fn get_matches(&self) -> &ArgMatches {
         &self.arg_matches
+    }
+
+    pub fn get_root_path(&self) -> PathBuf {
+        match &self.arg_matches.value_of("PATH") {
+            Some(path) => { Path::new(path).to_path_buf() }
+            None => {
+                current_dir().unwrap_or_else(|err| {
+                    println!("{} {}", "Error accessing current_dir:".red(), err);
+                    process::exit(1);
+                })
+            }
+        }
     }
 }

@@ -1,9 +1,7 @@
-use std::env::current_dir;
 use std::error::Error;
-use std::path::Path;
 use std::process;
 
-use clap::{App, Arg, ArgMatches, SubCommand};
+use clap::{App, Arg, SubCommand};
 use colored::*;
 use git2::{Error as GitError, Repository, StatusOptions};
 use regex::Regex;
@@ -11,6 +9,7 @@ use walkdir::{DirEntry};
 
 use crate::dir::DirectoryTreeOptions;
 use crate::git::GitAction;
+use crate::input_args::InputArgs;
 
 pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("status")
@@ -24,25 +23,17 @@ pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
         )
 }
 
-pub fn status(matches: &ArgMatches, filter_list: Vec<Regex>) {
+pub fn status(args: InputArgs, filter_list: Vec<Regex>) {
+    let matches = args.get_matches();
     let filter_hidden = matches.is_present("traverse-hidden");
-
-    let root_path = match matches.value_of("PATH") {
-        Some(path) => { Path::new(path).to_path_buf() }
-        None => {
-            current_dir().unwrap_or_else(|err| {
-                println!("{} {}", "Error accessing current_dir:".red(), err);
-                process::exit(1);
-            })
-        }
-    };
-
-    let root = root_path.to_str().expect(format!("{}", "Error in converting directory to string".red()).as_str());
 
     let dir_tree_with_options = DirectoryTreeOptions {
         filter_list: filter_list,
         filter_hidden: filter_hidden,
     };
+
+    let root_path = args.get_root_path();
+    let root = root_path.to_str().expect(format!("{}", "Error in converting directory to string".red()).as_str());
 
     dir_tree_with_options.process_directories(root, process_directory).unwrap_or_else(|err| {
         println!("{} {}: {}", "Failed getting status for path".red(), root.red(), err);

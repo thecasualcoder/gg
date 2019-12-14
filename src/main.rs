@@ -29,9 +29,9 @@ fn main() {
     let filter_list = create_filter_list().expect("failed to create filter_list");
 
     match args.input_command() {
-        input_args::InputCommand::Status => status::status(args.get_matches(), filter_list),
+        input_args::InputCommand::Status => status::status(args, filter_list),
         input_args::InputCommand::Create => create::create(args.get_matches()),
-        input_args::InputCommand::Fetch => fetch::fetch(args.get_matches(), filter_list),
+        input_args::InputCommand::Fetch => fetch::fetch(args, filter_list),
         input_args::InputCommand::Error => {}
     }
 }
