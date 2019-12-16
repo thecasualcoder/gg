@@ -1,4 +1,5 @@
 use std::error::Error;
+use std::fs;
 
 use regex::Regex;
 use walkdir::{DirEntry, WalkDir};
@@ -28,9 +29,11 @@ impl DirectoryTreeOptions {
             })
             .for_each(|e| {
                 if let Ok(e) = e {
-                    process_fn(&e).expect("processing failed");
+                    process_fn(&e).expect(format!("failed to process entry {:#?}", e).as_str())
                 }
             });
+
+        //Todo: After filtering, find entries that have .git in them and add them to a vector. Do process_fn only on the values of the vector then.
 
         Ok(())
     }
