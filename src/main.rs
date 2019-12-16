@@ -1,13 +1,14 @@
 #![recursion_limit = "128"]
-extern crate reqwest;
 extern crate clap;
 extern crate colored;
 extern crate git2;
+extern crate reqwest;
 extern crate walkdir;
 
-use clap::{crate_version, App, AppSettings};
-use regex::Regex;
 use std::error::Error;
+
+use clap::{App, AppSettings, crate_version};
+use regex::Regex;
 
 mod input_args;
 mod status;
@@ -26,12 +27,16 @@ fn main() {
 
     let args = input_args::InputArgs::parse_inputs(app.get_matches());
 
-    let filter_list = create_filter_list().expect("failed to create filter_list");
-
     match args.input_command() {
-        input_args::InputCommand::Status => status::status(args, filter_list),
+        input_args::InputCommand::Status => {
+            let filter_list = create_filter_list().expect("failed to create filter_list");
+            status::status(args, filter_list)
+        }
         input_args::InputCommand::Create => create::create(args),
-        input_args::InputCommand::Fetch => fetch::fetch(args, filter_list),
+        input_args::InputCommand::Fetch => {
+            let filter_list = create_filter_list().expect("failed to create filter_list");
+            fetch::fetch(args, filter_list)
+        }
         input_args::InputCommand::Error => {}
     }
 }
