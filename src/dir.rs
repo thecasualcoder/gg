@@ -1,5 +1,4 @@
 use std::error::Error;
-use std::fs;
 
 use regex::Regex;
 use walkdir::{DirEntry, WalkDir};

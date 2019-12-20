@@ -23,7 +23,8 @@ pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
         )
 }
 
-pub fn status(args: InputArgs, filter_list: Vec<Regex>) {
+pub fn
+status(args: InputArgs, filter_list: Vec<Regex>) {
     let matches = args.get_matches();
     let filter_hidden = matches.is_present("traverse-hidden");
 
