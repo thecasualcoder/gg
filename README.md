@@ -48,6 +48,19 @@ Create:
 $ gg create
 ```
 
+Config file:
+
+The config file can be specified via the `-c` flag. By default it tries to find `.ggConf.yaml`(Will currently fail if this is empty or missing). 
+Example config file:
+
+```yaml
+skipDirectories:
+  - .idea
+  - ignore
+```
+
+Currently only skip directories is in the config file. More features/bugs will be added/fixed around it.
+
 ##### TODO:
 [Please refer the github projects board](https://github.com/thecasualcoder/gg/projects/1)
 
