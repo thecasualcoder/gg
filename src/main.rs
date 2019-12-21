@@ -47,7 +47,6 @@ fn main() {
     match args.input_command() {
         input_args::InputCommand::Status => {
             let filter_list = create_filter_list(conf).expect("failed to create filter_list");
-            println!("{:#?}", filter_list);
             status::status(args, filter_list)
         }
         input_args::InputCommand::Create => create::create(args),
@@ -67,7 +66,6 @@ pub struct GGConf {
 }
 
 fn read_conf_file(conf_file: &str) -> Result<GGConf, Box<dyn Error>> {
-    println!("{:#?}", conf_file);
     let file = fs::File::open(conf_file)?;
     let config: GGConf = serde_yaml::from_reader(file)?;
     Ok(config)
@@ -77,7 +75,7 @@ fn create_filter_list(conf: GGConf) -> Result<Vec<Regex>, Box<dyn Error>> {
     // Todo: Sensible defaults can be added to it in code(.DS_STORE, .idea, a lot of dot directories).
     let mut filter_list = Vec::new();
     conf.filter_list.iter().for_each(|ignore| {
-        let re = Regex::new(format!("^{}?*", ignore).as_str()).expect("failed to construct regex");
+        let re = Regex::new(format!(r".*/{}?*", ignore).as_str()).expect("failed to construct regex");
         filter_list.push(re);
     });
     Ok(filter_list)
