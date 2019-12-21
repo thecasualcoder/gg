@@ -6,11 +6,11 @@ extern crate reqwest;
 extern crate serde_yaml;
 extern crate walkdir;
 
-use std::error::Error;
 use std::{fs, process};
-use colored::*;
+use std::error::Error;
 
 use clap::{App, AppSettings, Arg, crate_version};
+use colored::*;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
@@ -72,11 +72,18 @@ fn read_conf_file(conf_file: &str) -> Result<GGConf, Box<dyn Error>> {
 }
 
 fn create_filter_list(conf: GGConf) -> Result<Vec<Regex>, Box<dyn Error>> {
-    // Todo: Sensible defaults can be added to it in code(.DS_STORE, .idea, a lot of dot directories).
     let mut filter_list = Vec::new();
-    conf.filter_list.iter().for_each(|ignore| {
+    let mut filters = conf.filter_list.clone();
+    let defaults: Vec<String> = [".idea", ".DS_Store"].iter().map(|&s| s.into()).collect();
+    defaults.iter().for_each(|def| {
+        filters.push(def.to_owned());
+    });
+
+    filters.iter().for_each(|ignore| {
         let re = Regex::new(format!(r".*/{}?*", ignore).as_str()).expect("failed to construct regex");
         filter_list.push(re);
     });
+
+
     Ok(filter_list)
 }
