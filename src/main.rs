@@ -8,6 +8,7 @@ extern crate walkdir;
 
 use std::{fs, process};
 use std::error::Error;
+use std::path::Path;
 
 use clap::{App, AppSettings, Arg, crate_version};
 use colored::*;
@@ -66,9 +67,13 @@ pub struct GGConf {
 }
 
 fn read_conf_file(conf_file: &str) -> Result<GGConf, Box<dyn Error>> {
-    let file = fs::File::open(conf_file)?;
-    let config: GGConf = serde_yaml::from_reader(file)?;
-    Ok(config)
+    if Path::new(conf_file).exists() {
+        let file = fs::File::open(conf_file)?;
+        let config: GGConf = serde_yaml::from_reader(file)?;
+        return Ok(config);
+    }
+    let default = GGConf { filter_list: vec![] };
+    Ok(default)
 }
 
 fn create_filter_list(conf: GGConf) -> Result<Vec<Regex>, Box<dyn Error>> {
