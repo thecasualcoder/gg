@@ -95,6 +95,7 @@ impl<'a> GitAction for GitStatus<'a> {
                 };
             };
 
+//      Adapted from @Kurt-Bonatz in https://github.com/rust-lang/git2-rs/issues/332#issuecomment-408453956
         let head_ref = self.repo.revparse_single("HEAD").unwrap().id();
         let (is_ahead, is_behind) = self.repo.revparse_ext("@{u}")
             .ok()
