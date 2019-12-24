@@ -5,7 +5,7 @@ use clap::{App, Arg, SubCommand};
 use colored::*;
 use git2::{Error as GitError, Repository, StatusOptions};
 use regex::Regex;
-use walkdir::{DirEntry};
+use walkdir::DirEntry;
 
 use crate::dir::DirectoryTreeOptions;
 use crate::git::GitAction;
@@ -72,27 +72,46 @@ impl<'a> GitAction for GitStatus<'a> {
     fn git_action(&mut self) -> Result<(), GitError> {
         let git_statuses = self.repo.statuses(Some(self.opts))?;
         let mut statuses_in_dir = vec![];
+
         for entry in git_statuses
             .iter()
             .filter(|e| e.status() != git2::Status::CURRENT)
             {
                 let status = &entry.status();
                 if git2::Status::is_wt_new(status) {
-                    statuses_in_dir.push("new files");
+                    statuses_in_dir.push("new files".to_string());
                 };
                 if git2::Status::is_wt_deleted(status) {
-                    statuses_in_dir.push("deletions");
+                    statuses_in_dir.push("deletions".to_string());
                 };
                 if git2::Status::is_wt_renamed(status) {
-                    statuses_in_dir.push("renames");
+                    statuses_in_dir.push("renames".to_string());
                 };
                 if git2::Status::is_wt_typechange(status) {
-                    statuses_in_dir.push("typechanges");
+                    statuses_in_dir.push("typechanges".to_string());
                 };
                 if git2::Status::is_wt_modified(status) {
-                    statuses_in_dir.push("modifications");
+                    statuses_in_dir.push("modifications".to_string());
                 };
             };
+
+        let head_ref = self.repo.revparse_single("HEAD").unwrap().id();
+        let (is_ahead, is_behind) = self.repo.revparse_ext("@{u}")
+            .ok()
+            .and_then(|(upstream, _)| self.repo.graph_ahead_behind(head_ref, upstream.id()).ok())
+            .unwrap_or((0, 0));
+
+        if is_ahead > 0 {
+            let push_string = format!("{} ahead", is_ahead);
+            let push_string_colored = format!("{}", push_string.blue());
+            statuses_in_dir.push(push_string_colored);
+        }
+
+        if is_behind > 0 {
+            let push_string = format!("{} behind", is_ahead);
+            let push_string_colored = format!("{}", push_string.yellow());
+            statuses_in_dir.push(push_string_colored);
+        }
 
         if statuses_in_dir.is_empty() {
             println!("{:?}: {}", self.repo.path().parent().expect("Failed to get path from repository"),
