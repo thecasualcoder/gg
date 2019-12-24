@@ -50,7 +50,7 @@ $ gg create
 
 Config file:
 
-The config file can be specified via the `-c` flag. By default it tries to find `.ggConf.yaml`(Will currently fail if this is empty or missing). 
+The config file can be specified via the `-c` flag. By default it tries to find `.ggConf.yaml`(Will currently fail if this is an empty file).
 Example config file:
 
 ```yaml
