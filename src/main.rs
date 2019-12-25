@@ -43,13 +43,9 @@ fn main() {
     });
 
     match args.input_command() {
-        input_args::InputCommand::Status => {
-            status::status(args, conf.filter_list_regex)
-        }
+        input_args::InputCommand::Status => status::status(args, conf.filter_list_regex),
         input_args::InputCommand::Create => create::create(args),
-        input_args::InputCommand::Fetch => {
-            fetch::fetch(args, conf.filter_list_regex)
-        }
+        input_args::InputCommand::Fetch => fetch::fetch(args, conf.filter_list_regex),
         input_args::InputCommand::Error => {}
     }
 }
