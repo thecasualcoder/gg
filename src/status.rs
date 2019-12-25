@@ -110,9 +110,9 @@ impl<'a> GitAction for GitStatus<'a> {
             }
 
             if is_behind > 0 {
-                let push_string = format!("{} behind", is_ahead);
-                let push_string_colored = format!("{}", push_string.yellow());
-                statuses_in_dir.push(push_string_colored);
+                let pull_string = format!("{} behind", is_behind);
+                let pull_string_colored = format!("{}", pull_string.yellow());
+                statuses_in_dir.push(pull_string_colored);
             }
         }
 
