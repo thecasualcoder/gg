@@ -96,22 +96,24 @@ impl<'a> GitAction for GitStatus<'a> {
             };
 
 //      Adapted from @Kurt-Bonatz in https://github.com/rust-lang/git2-rs/issues/332#issuecomment-408453956
-        let head_ref = self.repo.revparse_single("HEAD").unwrap().id();
-        let (is_ahead, is_behind) = self.repo.revparse_ext("@{u}")
-            .ok()
-            .and_then(|(upstream, _)| self.repo.graph_ahead_behind(head_ref, upstream.id()).ok())
-            .unwrap_or((0, 0));
+        if self.repo.revparse_single("HEAD").is_ok() {
+            let head_ref = self.repo.revparse_single("HEAD").expect("HEAD not found").id();
+            let (is_ahead, is_behind) = self.repo.revparse_ext("@{u}")
+                .ok()
+                .and_then(|(upstream, _)| self.repo.graph_ahead_behind(head_ref, upstream.id()).ok())
+                .unwrap_or((0, 0));
 
-        if is_ahead > 0 {
-            let push_string = format!("{} ahead", is_ahead);
-            let push_string_colored = format!("{}", push_string.blue());
-            statuses_in_dir.push(push_string_colored);
-        }
+            if is_ahead > 0 {
+                let push_string = format!("{} ahead", is_ahead);
+                let push_string_colored = format!("{}", push_string.blue());
+                statuses_in_dir.push(push_string_colored);
+            }
 
-        if is_behind > 0 {
-            let push_string = format!("{} behind", is_ahead);
-            let push_string_colored = format!("{}", push_string.yellow());
-            statuses_in_dir.push(push_string_colored);
+            if is_behind > 0 {
+                let pull_string = format!("{} behind", is_behind);
+                let pull_string_colored = format!("{}", pull_string.yellow());
+                statuses_in_dir.push(pull_string_colored);
+            }
         }
 
         if statuses_in_dir.is_empty() {
