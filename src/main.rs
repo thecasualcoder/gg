@@ -18,6 +18,7 @@ mod fetch;
 mod git;
 mod dir;
 mod conf;
+mod clone;
 
 fn main() {
     let app = App::new("Git Governance")
@@ -30,7 +31,8 @@ fn main() {
             .help("config file to use. Defaults to .ggConf"))
         .subcommand(status::sub_command())
         .subcommand(create::sub_command())
-        .subcommand(fetch::sub_command());
+        .subcommand(fetch::sub_command())
+        .subcommand(clone::sub_command());
 
 
     let global_matches = app.get_matches();
@@ -45,6 +47,7 @@ fn main() {
     match args.input_command() {
         input_args::InputCommand::Status => status::status(args, conf.filter_list_regex),
         input_args::InputCommand::Create => create::create(args),
+        input_args::InputCommand::Clone => clone::clone(args, conf.clone_repos),
         input_args::InputCommand::Fetch => fetch::fetch(args, conf.filter_list_regex),
         input_args::InputCommand::Error => {}
     }

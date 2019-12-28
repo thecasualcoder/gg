@@ -1,16 +1,14 @@
 use std::{env, process};
 use std::collections::HashMap;
 use std::error::Error;
-use std::path::Path;
 
 use clap::{App, Arg, SubCommand};
 use colored::*;
-use git2::build::RepoBuilder;
-use git2::Error as GitError;
 use reqwest::{Client, RequestBuilder};
 
 use crate::git::GitAction;
 use crate::input_args::InputArgs;
+use crate::clone::GitClone;
 
 pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("create")
@@ -116,20 +114,4 @@ fn create_remote(token: String, platform: &str, repo_name: &str) -> Result<Strin
         repo_name: String::from(repo_name),
     };
     remote_repo.create()
-}
-
-pub struct GitClone<'a> {
-    remote_url: &'a str,
-    local_path: &'a Path,
-}
-
-impl<'a> GitAction for GitClone<'a> {
-    fn git_action(&mut self) -> Result<(), GitError> {
-        RepoBuilder::new()
-            .clone(self.remote_url, self.local_path)?;
-        println!("{} {} {} {:#?}", "Created repo at".green(), self.remote_url.green(), "and cloned locally at".green(),
-                 self.local_path.as_os_str());
-
-        Ok(())
-    }
 }
