@@ -1,10 +1,13 @@
 use std::error::Error;
 use std::fs;
 use std::path::Path;
-use serde::{Deserialize, Serialize};
 
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 
+use crate::clone::GitRepo;
+
+// Todo: This will never be serialized. Try removing Serialize.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GGConf {
     #[serde(alias = "skipDirectories")]
@@ -12,21 +15,40 @@ pub struct GGConf {
     filter_list: Vec<String>,
     #[serde(skip)]
     pub filter_list_regex: Vec<Regex>,
+    #[serde(alias = "cloneRepos")]
+    #[serde(rename = "cloneRepos")]
+    // Todo: Add validations on this field. It should not allow empty key/values.
+    pub clone_repos: Vec<GitRepo>,
+}
+
+impl GGConf {
+    pub fn default() -> GGConf {
+        GGConf {
+            filter_list: vec![],
+            filter_list_regex: vec![],
+            clone_repos: vec![],
+        }
+    }
 }
 
 pub fn read_conf_file(conf_file: &str) -> Result<GGConf, Box<dyn Error>> {
     if Path::new(conf_file).exists() {
         let file = fs::File::open(conf_file)?;
-        let config: GGConf = serde_yaml::from_reader(file)?;
-        let updated_conf = create_filter_list(config)?;
-        return Ok(updated_conf);
+        let mut config: GGConf = serde_yaml::from_reader(file)?;
+        update_conf_file(&mut config)?;
+        return Ok(config);
     }
-    let default = GGConf { filter_list: vec![], filter_list_regex: vec![] };
-    let updated_conf = create_filter_list(default)?;
-    Ok(updated_conf)
+    let mut default = GGConf::default();
+    update_conf_file(&mut default)?;
+    Ok(default)
 }
 
-fn create_filter_list(conf: GGConf) -> Result<GGConf, Box<dyn Error>> {
+fn update_conf_file(conf: &mut GGConf) -> Result<&mut GGConf, Box<dyn Error>> {
+    create_filter_list(conf)?;
+    Ok(conf)
+}
+
+fn create_filter_list(conf: &mut GGConf) -> Result<&mut GGConf, Box<dyn Error>> {
     let mut filter_list = Vec::new();
     let mut filters = conf.filter_list.clone();
     let defaults: Vec<String> = [".idea", ".DS_Store"].iter().map(|&s| s.into()).collect();
@@ -39,6 +61,7 @@ fn create_filter_list(conf: GGConf) -> Result<GGConf, Box<dyn Error>> {
         filter_list.push(re);
     });
 
-    let updated_conf = GGConf { filter_list: conf.filter_list, filter_list_regex: filter_list };
-    Ok(updated_conf)
+    conf.filter_list = filters;
+    conf.filter_list_regex = filter_list;
+    Ok(conf)
 }

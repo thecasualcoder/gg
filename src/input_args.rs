@@ -9,6 +9,7 @@ pub enum InputCommand {
     Status,
     Create,
     Fetch,
+    Clone,
     Error,
 }
 
@@ -18,6 +19,7 @@ impl InputCommand {
             InputCommand::Status => "status",
             InputCommand::Create => "create",
             InputCommand::Fetch => "fetch",
+            InputCommand::Clone => "clone",
             _ => "unknown command"
         }
     }
@@ -45,6 +47,11 @@ impl<'a> InputArgs<'a> {
         } else if subcommand_name == InputCommand::Fetch.as_str() {
             InputArgs {
                 input_command: InputCommand::Fetch,
+                arg_matches: matches.to_owned(),
+            }
+        } else if subcommand_name == InputCommand::Clone.as_str() {
+            InputArgs {
+                input_command: InputCommand::Clone,
                 arg_matches: matches.to_owned(),
             }
         } else {
