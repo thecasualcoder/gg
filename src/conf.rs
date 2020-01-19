@@ -17,6 +17,7 @@ pub struct GGConf {
     pub filter_list_regex: Vec<Regex>,
     #[serde(alias = "cloneRepos")]
     #[serde(rename = "cloneRepos")]
+    #[serde(default)]
     // Todo: Add validations on this field. It should not allow empty key/values.
     pub clone_repos: Vec<GitRepo>,
 }
