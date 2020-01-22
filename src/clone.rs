@@ -40,7 +40,12 @@ pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
 pub fn clone(args: InputArgs, mut clone_repos: Vec<GitRepo>) {
     let matches = args.get_matches();
 
-    let remote_urls: Vec<&str> = matches.values_of("repo_url").expect("failed getting remote_urls from user").collect();
+    let remotes = matches.values_of("repo_url");
+    let mut remote_urls: Vec<&str> = vec![];
+    if remotes.is_some() {
+        remote_urls = remotes.expect("failed parsing remote_urls from user").collect();
+    }
+//    let remote_urls: Vec<&str> = matches.values_of("repo_url").expect("failed getting remote_urls from user").collect();
     let local_path = matches.value_of("local_path").expect("failed parsing local path from arguments");
 
     let mut remotes_from_args: Vec<GitRepo> = vec![];
