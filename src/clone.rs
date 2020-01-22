@@ -40,19 +40,45 @@ pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
 pub fn clone(args: InputArgs, mut clone_repos: Vec<GitRepo>) {
     let matches = args.get_matches();
 
-    let remote_urls: Vec<&str> = matches.values_of("repo_url").expect("failed getting remote_urls from user").collect();
+    let remotes = matches.values_of("repo_url");
+    let mut remote_urls: Vec<&str> = vec![];
+    if remotes.is_some() {
+        remote_urls = remotes.expect("failed parsing remote_urls from user").collect();
+        println!("{}", "Cloning remotes passed as arguments".blue());
+    } else {
+        println!("{}", "No remotes were passed as arguments.".yellow())
+    }
     let local_path = matches.value_of("local_path").expect("failed parsing local path from arguments");
 
     let mut remotes_from_args: Vec<GitRepo> = vec![];
     for remote in remote_urls {
+        let remote_url_string = remote.to_string();
+        let splits = remote_url_string.split("/")
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>()
+            .last()
+            .expect("Failed to get repo name from remote URL")
+            .split(".")
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>();
+
         let repo = GitRepo {
-            remote_url: remote.to_string(),
-            local_path: local_path.to_string(),
+            remote_url: remote_url_string,
+            local_path: format!("{}/{}", local_path.to_string(), splits[0]),
         };
         remotes_from_args.push(repo);
     }
 
-    remotes_from_args.append(&mut clone_repos);
+    if clone_repos.is_empty() {
+        println!("{}", "No remotes configured in conf file".yellow())
+    } else {
+        println!("{}", "Cloning remotes configured in conf file".blue());
+        remotes_from_args.append(&mut clone_repos);
+    }
+
+    if remotes_from_args.is_empty() {
+        println!("{}", "Please configure conf file to clone repositories or pass the necessary values as arguments".blue())
+    }
 
     for remote in remotes_from_args {
         let mut clone = GitClone { remote_url: remote.remote_url.as_str(), local_path: Path::new(remote.local_path.as_str()) };
