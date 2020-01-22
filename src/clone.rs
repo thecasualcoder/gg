@@ -44,8 +44,11 @@ pub fn clone(args: InputArgs, mut clone_repos: Vec<GitRepo>) {
     let mut remote_urls: Vec<&str> = vec![];
     if remotes.is_some() {
         remote_urls = remotes.expect("failed parsing remote_urls from user").collect();
+        println!("{}", "Cloning remotes passed as arguments".blue());
     }
-//    let remote_urls: Vec<&str> = matches.values_of("repo_url").expect("failed getting remote_urls from user").collect();
+    else {
+        println!("{}", "No remotes were passed as arguments.".yellow())
+    }
     let local_path = matches.value_of("local_path").expect("failed parsing local path from arguments");
 
     let mut remotes_from_args: Vec<GitRepo> = vec![];
@@ -57,7 +60,17 @@ pub fn clone(args: InputArgs, mut clone_repos: Vec<GitRepo>) {
         remotes_from_args.push(repo);
     }
 
-    remotes_from_args.append(&mut clone_repos);
+    if clone_repos.is_empty() {
+        println!("{}", "No remotes configured in conf file".yellow())
+    }
+    else {
+        println!("{}", "Cloning remotes configured in conf file".blue());
+        remotes_from_args.append(&mut clone_repos);
+    }
+
+    if remotes_from_args.is_empty() {
+        println!("{}", "Please configure conf file to clone repositories or pass the necessary values as arguments".blue())
+    }
 
     for remote in remotes_from_args {
         let mut clone = GitClone { remote_url: remote.remote_url.as_str(), local_path: Path::new(remote.local_path.as_str()) };
