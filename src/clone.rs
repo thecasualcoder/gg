@@ -45,25 +45,33 @@ pub fn clone(args: InputArgs, mut clone_repos: Vec<GitRepo>) {
     if remotes.is_some() {
         remote_urls = remotes.expect("failed parsing remote_urls from user").collect();
         println!("{}", "Cloning remotes passed as arguments".blue());
-    }
-    else {
+    } else {
         println!("{}", "No remotes were passed as arguments.".yellow())
     }
     let local_path = matches.value_of("local_path").expect("failed parsing local path from arguments");
 
     let mut remotes_from_args: Vec<GitRepo> = vec![];
     for remote in remote_urls {
+        let remote_url_string = remote.to_string();
+        let splits = remote_url_string.split("/")
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>()
+            .last()
+            .expect("Failed to get repo name from remote URL")
+            .split(".")
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>();
+
         let repo = GitRepo {
-            remote_url: remote.to_string(),
-            local_path: local_path.to_string(),
+            remote_url: remote_url_string,
+            local_path: format!("{}/{}", local_path.to_string(), splits[0]),
         };
         remotes_from_args.push(repo);
     }
 
     if clone_repos.is_empty() {
         println!("{}", "No remotes configured in conf file".yellow())
-    }
-    else {
+    } else {
         println!("{}", "Cloning remotes configured in conf file".blue());
         remotes_from_args.append(&mut clone_repos);
     }
