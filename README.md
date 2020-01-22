@@ -5,7 +5,7 @@ A tool to manage multiple git repositories.
 This does not aim to replace git in any way but tries to reduce the work in managing multiple git repositories at once.
 
 
-##### Installation
+#### Installation
 
 Using Brew:
 
@@ -24,15 +24,15 @@ cargo install --path .
 > Note: Recommaded rustc/cargo version: 1.36.0 and above or 1.37.0-nightly and above 
 
 
-##### Usage:
+#### Usage:
 
-Help:
+##### Help:
 ```bash
 $ gg --help
 ```
 ![Help](/gifs/ggHelp.gif)
 
-Status:
+##### Status:
 Shows status of all git repos from current directory. Traverses inside directories also. 
 To traverse through hidden directories use the `-i` flag. By default hidden directories will not be traversed.
 
@@ -41,7 +41,7 @@ $ gg status
 ```
 ![Status](/gifs/ggStatus.gif)
 
-Create:
+##### Create:
 Creates a remote repository and clones it to the local path specified. Remote repository is created based on the GITHUB_TOKEN provided.
 GITHUB_TOKEN can be passed as an env variable or can be given as an argument through the `-t` flag
 ```bash
@@ -49,7 +49,7 @@ $ gg create -r <repo_name> -l <local_path>
 ```
 ![Create](/gifs/ggCreate.gif)
 
-Fetch:
+##### Fetch:
 Fetches from all git repositories starting from current directory. Traverses inside directories also.
 Currently Fetch only uses the private key `id_rsa` to authenticate and will fail to fetch if it is not enough. Failure to fetch one repo will not fail others
 To traverse through hidden directories use the `-i` flag. By default hidden directories will not be traversed.
@@ -58,14 +58,15 @@ $ gg fetch
 ```
 ![Fetch](/gifs/ggFetch.gif)
 
-Clone:
+##### Clone:
 Clones repositories based on the flags passed and the configuration given in the `.ggConf.yaml` file.
+Only supports https URL's
 ```bash
 $ gg clone -r <remote_url_1> -r <remote_url_2> -l <local_path>  
 ```
 ![Clone](/gifs/ggClone.gif)
 
-Config file:
+##### Config file:
 
 The config file can be specified via the `-c` flag. By default it tries to find `.ggConf.yaml`.
 Example config file:
