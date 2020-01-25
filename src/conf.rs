@@ -2,6 +2,7 @@ use std::error::Error;
 use std::fs;
 use std::path::Path;
 
+use git2::{Cred, CredentialType, Error as GitError};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
@@ -66,4 +67,19 @@ fn create_filter_list(conf: &mut GGConf) -> Result<&mut GGConf, Box<dyn Error>> 
     conf.filter_list = filters;
     conf.filter_list_regex = filter_list;
     Ok(conf)
+}
+
+pub fn ssh_auth_callback(_user: &str, _user_from_url: Option<&str>, _cred: CredentialType)
+                         -> Result<Cred, GitError> {
+    match std::env::var("HOME") {
+        Ok(home) => {
+            let path = format!("{}/.ssh/id_rsa", home);
+            let credentials_path = std::path::Path::new(&path);
+            match credentials_path.exists() {
+                true => Cred::ssh_key("git", None, credentials_path, None),
+                false => Err(GitError::from_str(&format!("unable to get key from {}", path))),
+            }
+        }
+        Err(_) => Err(GitError::from_str("unable to get env variable HOME")),
+    }
 }

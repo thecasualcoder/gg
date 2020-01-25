@@ -2,10 +2,11 @@ use std::path::Path;
 
 use clap::{App, Arg, SubCommand};
 use colored::*;
+use git2::{Error as GitError, FetchOptions, RemoteCallbacks};
 use git2::build::RepoBuilder;
-use git2::Error as GitError;
 use serde::{Deserialize, Serialize};
 
+use crate::conf;
 use crate::git::GitAction;
 use crate::input_args::InputArgs;
 
@@ -81,7 +82,16 @@ pub fn clone(args: InputArgs, mut clone_repos: Vec<GitRepo>) {
     }
 
     for remote in remotes_from_args {
-        let mut clone = GitClone { remote_url: remote.remote_url.as_str(), local_path: Path::new(remote.local_path.as_str()) };
+        let mut use_ssh = false;
+        if remote.remote_url.contains("git@") {
+            use_ssh = true;
+        }
+
+        let mut clone = GitClone {
+            remote_url: remote.remote_url.as_str(),
+            local_path: Path::new(remote.local_path.as_str()),
+            use_ssh: use_ssh,
+        };
         clone.git_action().expect(format!("Failed to clone repo {}, ", remote.remote_url).as_str());
     }
 }
@@ -89,13 +99,24 @@ pub fn clone(args: InputArgs, mut clone_repos: Vec<GitRepo>) {
 pub struct GitClone<'a> {
     pub remote_url: &'a str,
     pub local_path: &'a Path,
+    pub use_ssh: bool,
 }
 
-// Todo: Add spinner to show progress.
 impl<'a> GitAction for GitClone<'a> {
     fn git_action(&mut self) -> Result<(), GitError> {
-        RepoBuilder::new()
-            .clone(self.remote_url, self.local_path)?;
+        let mut builder = RepoBuilder::new();
+
+        if self.use_ssh {
+            let mut callback = RemoteCallbacks::new();
+            callback.credentials(conf::ssh_auth_callback);
+
+            let mut fetch_options = FetchOptions::new();
+            fetch_options.remote_callbacks(callback);
+
+            builder.fetch_options(fetch_options);
+        }
+
+        builder.clone(self.remote_url, self.local_path)?;
         println!("{} - {} {} {:#?}", "Remote repo".green(), self.remote_url.blue(), "cloned locally at".green(),
                  self.local_path.as_os_str());
 

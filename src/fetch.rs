@@ -66,12 +66,11 @@ fn fetch_repo<'a>(repo: Repository) -> Result<(), Box<dyn Error>> {
         let remote = "origin";
         print!("{} {} {} {:#?} -> ", "\nFetching".blue(), remote.blue(), "for".blue(), path);
 
-        let mut cb = RemoteCallbacks::new();
-
         let remote = repo
             .find_remote(remote)
             .or_else(|_| repo.remote_anonymous(remote))?;
 
+        let mut cb = RemoteCallbacks::new();
         cb.credentials(git_credentials_callback);
 
         let mut fo = FetchOptions::new();
