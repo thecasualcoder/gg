@@ -6,9 +6,9 @@ use clap::{App, Arg, SubCommand};
 use colored::*;
 use reqwest::{Client, RequestBuilder};
 
+use crate::clone::GitClone;
 use crate::git::GitAction;
 use crate::input_args::InputArgs;
-use crate::clone::GitClone;
 
 pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("create")
@@ -50,7 +50,12 @@ pub fn create(args: InputArgs) {
         process::exit(1);
     });
 
-    let mut clone = GitClone { remote_url: remote_url.as_str(), local_path: root_path.as_path() };
+    let mut clone = GitClone {
+        remote_url: remote_url.as_str(),
+        local_path: root_path.as_path(),
+        use_ssh: false,
+    };
+
     clone.git_action().expect(format!("Failed to clone repo {}, ", remote_url).as_str());
 }
 
