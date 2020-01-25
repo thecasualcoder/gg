@@ -1,6 +1,6 @@
 [package]
 name = "git-governance"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Ninan John <jninan@thoughtworks.com>", "Dinesh B<dineshudt17@gmail.com>"]
 edition = "2018"
 description="A tool to manage multiple git repositories"

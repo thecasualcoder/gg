@@ -60,7 +60,6 @@ $ gg fetch
 
 ##### Clone:
 Clones repositories based on the flags passed and the configuration given in the `.ggConf.yaml` file.
-Only supports https URL's
 ```bash
 $ gg clone -r <remote_url_1> -r <remote_url_2> -l <local_path>  
 ```
