@@ -90,3 +90,4 @@ pub fn ssh_auth_callback(
         Err(_) => Err(GitError::from_str("unable to get env variable HOME")),
     }
 }
+
