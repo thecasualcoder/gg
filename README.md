@@ -3,7 +3,7 @@
 
 A tool to manage multiple git repositories. 
 This does not aim to replace git in any way but tries to reduce the work in managing multiple git repositories at once.
-
+To know about the story behind this tool, take a look at this blog -> https://medium.com/@jpninanjohn/we-built-a-tool-in-rust-9c1bcb9b655e
 
 #### Installation
 
