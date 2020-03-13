@@ -1,106 +1,110 @@
-use std::error::Error;
-use std::process;
-
 use clap::{App, Arg, SubCommand};
 use colored::*;
 use git2::{Error as GitError, Repository, StatusOptions};
 use regex::Regex;
-use walkdir::DirEntry;
+use std::path::PathBuf;
 
 use crate::dir::DirectoryTreeOptions;
 use crate::git::GitAction;
 use crate::input_args::InputArgs;
+use crate::progress::{ProgressReporter, ProgressTracker};
 
 pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("status")
-        .arg(Arg::with_name("PATH")
-            .short("f")
-            .takes_value(true)
-            .help("path at which to create the local repo"))
-        .arg(Arg::with_name("traverse-hidden")
-            .short("i")
-            .help("traverse through hidden directories also")
+        .arg(
+            Arg::with_name("PATH")
+                .short("f")
+                .takes_value(true)
+                .help("path at which to create the local repo"),
+        )
+        .arg(
+            Arg::with_name("traverse-hidden")
+                .short("i")
+                .help("traverse through hidden directories also"),
         )
 }
 
-pub fn
-status(args: InputArgs, filter_list: Vec<Regex>) {
+pub fn status(args: InputArgs, filter_list: Vec<Regex>) {
     let matches = args.get_matches();
     let filter_hidden = matches.is_present("traverse-hidden");
 
     let dir_tree_with_options = DirectoryTreeOptions {
-        filter_list: filter_list,
-        filter_hidden: filter_hidden,
+        filter_list,
+        filter_hidden,
     };
 
     let root_path = args.get_root_path("PATH");
-    let root = root_path.to_str().expect(format!("{}", "Error in converting directory to string".red()).as_str());
+    let root = root_path
+        .to_str()
+        .expect(format!("{}", "Error in converting directory to string".red()).as_str());
 
-    dir_tree_with_options.process_directories(root, process_directory).unwrap_or_else(|err| {
-        println!("{} {}: {}", "Failed getting status for path".red(), root.red(), err);
-        process::exit(1);
-    });
+    let multi_bars = ProgressTracker::new();
+    dir_tree_with_options
+        .process_directories(root)
+        .flat_map(|dir| {
+            dir.ok().and_then(|d| {
+                if d.file_name().eq(".git") {
+                    d.path().parent().map(|e| e.to_path_buf())
+                } else {
+                    None
+                }
+            })
+        })
+        .map(|dir| GitStatus { dir })
+        .for_each(|status| multi_bars.start_task(status));
+    multi_bars.join().unwrap();
 }
 
-fn process_directory(dir: &DirEntry) -> Result<(), Box<dyn Error>> {
-    if dir.file_name().eq(".git") {
-        match dir.path().parent() {
-            Some(dir) => {
-                let repo = Repository::open(dir)?;
-                let mut opts = StatusOptions::new();
-                opts.include_ignored(true)
-                    .include_untracked(true)
-                    .recurse_untracked_dirs(false)
-                    .exclude_submodules(false);
-                let mut gst = GitStatus { repo: repo, opts: &mut opts };
-                gst.git_action()?
-            }
-            None => {
-                println!("{} {:#?}", "error accessing parent directory of".red(), dir.path())
-            }
-        }
+pub struct GitStatus {
+    dir: PathBuf,
+}
+
+impl<'a> GitAction for GitStatus {
+    fn get_name(&self) -> String {
+        self.dir.to_string_lossy().to_string()
     }
-    Ok(())
-}
 
-pub struct GitStatus<'a> {
-    repo: Repository,
-    opts: &'a mut StatusOptions,
-}
+    fn git_action(&mut self, _progress: &ProgressReporter) -> Result<String, GitError> {
+        let mut opts = StatusOptions::new();
+        opts.include_ignored(true)
+            .include_untracked(true)
+            .recurse_untracked_dirs(false)
+            .exclude_submodules(false);
 
-impl<'a> GitAction for GitStatus<'a> {
-    fn git_action(&mut self) -> Result<(), GitError> {
-        let git_statuses = self.repo.statuses(Some(self.opts))?;
+        let repo = Repository::open(self.dir.clone())?;
+
+        let git_statuses = repo.statuses(Some(&mut opts))?;
         let mut statuses_in_dir = vec![];
 
         for entry in git_statuses
             .iter()
             .filter(|e| e.status() != git2::Status::CURRENT)
-            {
-                let status = &entry.status();
-                if git2::Status::is_wt_new(status) {
-                    statuses_in_dir.push("new files".to_string());
-                };
-                if git2::Status::is_wt_deleted(status) {
-                    statuses_in_dir.push("deletions".to_string());
-                };
-                if git2::Status::is_wt_renamed(status) {
-                    statuses_in_dir.push("renames".to_string());
-                };
-                if git2::Status::is_wt_typechange(status) {
-                    statuses_in_dir.push("typechanges".to_string());
-                };
-                if git2::Status::is_wt_modified(status) {
-                    statuses_in_dir.push("modifications".to_string());
-                };
+        {
+            let status = &entry.status();
+            if git2::Status::is_wt_new(status) {
+                statuses_in_dir.push("new files".to_string());
             };
+            if git2::Status::is_wt_deleted(status) {
+                statuses_in_dir.push("deletions".to_string());
+            };
+            if git2::Status::is_wt_renamed(status) {
+                statuses_in_dir.push("renames".to_string());
+            };
+            if git2::Status::is_wt_typechange(status) {
+                statuses_in_dir.push("typechanges".to_string());
+            };
+            if git2::Status::is_wt_modified(status) {
+                statuses_in_dir.push("modifications".to_string());
+            };
+        }
 
-//      Adapted from @Kurt-Bonatz in https://github.com/rust-lang/git2-rs/issues/332#issuecomment-408453956
-        if self.repo.revparse_single("HEAD").is_ok() {
-            let head_ref = self.repo.revparse_single("HEAD").expect("HEAD not found").id();
-            let (is_ahead, is_behind) = self.repo.revparse_ext("@{u}")
+        //      Adapted from @Kurt-Bonatz in https://github.com/rust-lang/git2-rs/issues/332#issuecomment-408453956
+        if repo.revparse_single("HEAD").is_ok() {
+            let head_ref = repo.revparse_single("HEAD").expect("HEAD not found").id();
+            let (is_ahead, is_behind) = repo
+                .revparse_ext("@{u}")
                 .ok()
-                .and_then(|(upstream, _)| self.repo.graph_ahead_behind(head_ref, upstream.id()).ok())
+                .and_then(|(upstream, _)| repo.graph_ahead_behind(head_ref, upstream.id()).ok())
                 .unwrap_or((0, 0));
 
             if is_ahead > 0 {
@@ -116,15 +120,12 @@ impl<'a> GitAction for GitStatus<'a> {
             }
         }
 
-        if statuses_in_dir.is_empty() {
-            println!("{:?}: {}", self.repo.path().parent().expect("Failed to get path from repository"),
-                     "no changes".green());
+        Ok(if statuses_in_dir.is_empty() {
+            "no changes".green().to_string()
         } else {
             statuses_in_dir.sort();
             statuses_in_dir.dedup();
-            println!("{:?}: {}", self.repo.path().parent().expect("Failed to get path from repository"),
-                     statuses_in_dir.join(", ").red());
-        }
-        Ok(())
+            statuses_in_dir.join(", ").red().to_string()
+        })
     }
 }
