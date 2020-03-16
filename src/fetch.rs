@@ -53,7 +53,10 @@ pub fn fetch(args: InputArgs, filter_list: Vec<Regex>) {
                 }
             })
         })
-        .map(|dir| GitFetch { dir })
+        .map(|dir| GitFetch {
+            dir,
+            remote: "origin".to_string(),
+        })
         .for_each(|clone| multi_bars.start_task(clone));
 
     multi_bars.join().unwrap();
@@ -82,6 +85,7 @@ pub fn git_credentials_callback(
 
 pub struct GitFetch {
     dir: PathBuf,
+    remote: String,
 }
 
 impl<'a> GitAction for GitFetch {
@@ -94,10 +98,9 @@ impl<'a> GitAction for GitFetch {
         let path = self.dir.parent();
         let remotes = repo.remotes()?;
 
-        let remote_name = "origin";
-        let mut remote = if remotes.iter().any(|remote| remote == Some(remote_name)) {
-            repo.find_remote(remote_name)
-                .or_else(|_| repo.remote_anonymous(remote_name))?
+        let mut remote = if remotes.iter().any(|remote| remote == Some(&self.remote)) {
+            repo.find_remote(&self.remote)
+                .or_else(|_| repo.remote_anonymous(&self.remote))?
         } else {
             // TODO Use proper error handling
             return Ok(format!(
