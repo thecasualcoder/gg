@@ -91,7 +91,7 @@ pub fn clone(args: InputArgs, mut clone_repos: Vec<GitRepo>) {
         println!("{}", "Please configure conf file to clone repositories or pass the necessary values as arguments".blue())
     }
 
-    let multi_bars = ProgressTracker::new();
+    let multi_bars = ProgressTracker::new(matches.value_of("jobs").and_then(|e| e.parse().ok()));
     remotes_from_args
         .into_iter()
         .map(|remote| GitClone {
@@ -116,7 +116,6 @@ impl GitAction for GitClone {
     }
 
     fn git_action(&mut self, prog: &ProgressReporter) -> Result<String, GitError> {
-        prog.report_progress("Download is about to begin");
         let mut builder = RepoBuilder::new();
 
         let mut fetch_options = FetchOptions::new();

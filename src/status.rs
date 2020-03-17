@@ -38,7 +38,7 @@ pub fn status(args: InputArgs, filter_list: Vec<Regex>) {
         .to_str()
         .expect(format!("{}", "Error in converting directory to string".red()).as_str());
 
-    let multi_bars = ProgressTracker::new();
+    let multi_bars = ProgressTracker::new(matches.value_of("jobs").and_then(|e| e.parse().ok()));
     dir_tree_with_options
         .process_directories(root)
         .flat_map(|dir| {

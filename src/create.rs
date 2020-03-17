@@ -66,7 +66,7 @@ pub fn create(args: InputArgs) {
         use_ssh: false,
     };
 
-    let multi_bars = ProgressTracker::new();
+    let multi_bars = ProgressTracker::new(matches.value_of("jobs").and_then(|e| e.parse().ok()));
     multi_bars.start_task(clone);
     multi_bars.join().unwrap();
 }

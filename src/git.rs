@@ -6,6 +6,7 @@ pub trait GitAction {
     fn get_name(&self) -> String;
 
     fn do_git_action(&mut self, prog: ProgressReporter) {
+        prog.start();
         match self.git_action(&prog) {
             Ok(res) => prog.finalize(&res),
             Err(err) => prog.abandon(err),
