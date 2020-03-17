@@ -21,7 +21,6 @@ impl ProgressTracker {
 
         prog_bar.set_prefix(&remote_url.blue());
         prog_bar.set_message(&"Waiting for process to begin".cyan());
-        prog_bar.set_draw_delta(100);
 
         ProgressReporter(prog_bar)
     }
@@ -47,12 +46,14 @@ const STYLE_ERROR: &str = "{prefix:>40!.blue} {wide_msg:.red}";
 
 impl ProgressReporter {
     pub fn finalize(self, status: &str) {
+        self.0.set_draw_delta(0);
         self.0
             .set_style(ProgressStyle::default_bar().template(STYLE_DONE));
         self.0.finish_with_message(status);
     }
 
     pub fn abandon(self, err: Error) {
+        self.0.set_draw_delta(0);
         self.0
             .set_style(ProgressStyle::default_bar().template(STYLE_ERROR));
         // self.0.println(format!("{}", err));
@@ -60,6 +61,7 @@ impl ProgressReporter {
     }
 
     pub fn get_callback(&self) -> Box<dyn FnMut(Progress) -> bool> {
+        self.0.set_draw_delta(500);
         let prog_bar = self.0.clone();
         Box::new(move |p: Progress| {
             prog_bar.set_style(ProgressStyle::default_bar().template(STYLE_LOAD));
@@ -78,5 +80,9 @@ impl ProgressReporter {
             }
             true
         })
+    }
+
+    pub fn report_progress(&self, msg: &str) {
+        self.0.set_message(msg);
     }
 }

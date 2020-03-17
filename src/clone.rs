@@ -116,6 +116,7 @@ impl GitAction for GitClone {
     }
 
     fn git_action(&mut self, prog: &ProgressReporter) -> Result<String, GitError> {
+        prog.report_progress("Download is about to begin");
         let mut builder = RepoBuilder::new();
 
         let mut fetch_options = FetchOptions::new();

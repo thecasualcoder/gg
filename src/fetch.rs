@@ -90,7 +90,7 @@ pub struct GitFetch {
 
 impl<'a> GitAction for GitFetch {
     fn get_name(&self) -> String {
-        self.dir.file_name().unwrap().to_string_lossy().to_string()
+        format!("{} from {:?}", self.remote, self.dir)
     }
 
     fn git_action(&mut self, prog: &ProgressReporter) -> Result<String, GitError> {
