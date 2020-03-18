@@ -60,7 +60,8 @@ fn create_filter_list(conf: &mut GGConf) -> Result<&mut GGConf, Box<dyn Error>> 
     });
 
     filters.iter().for_each(|ignore| {
-        let re = Regex::new(format!(r".*/{}?*", ignore).as_str()).expect("failed to construct regex");
+        let re =
+            Regex::new(format!(r".*/{}?*", ignore).as_str()).expect("failed to construct regex");
         filter_list.push(re);
     });
 
@@ -69,15 +70,21 @@ fn create_filter_list(conf: &mut GGConf) -> Result<&mut GGConf, Box<dyn Error>> 
     Ok(conf)
 }
 
-pub fn ssh_auth_callback(_user: &str, _user_from_url: Option<&str>, _cred: CredentialType)
-                         -> Result<Cred, GitError> {
+pub fn ssh_auth_callback(
+    _user: &str,
+    _user_from_url: Option<&str>,
+    _cred: CredentialType,
+) -> Result<Cred, GitError> {
     match std::env::var("HOME") {
         Ok(home) => {
             let path = format!("{}/.ssh/id_rsa", home);
             let credentials_path = std::path::Path::new(&path);
             match credentials_path.exists() {
                 true => Cred::ssh_key("git", None, credentials_path, None),
-                false => Err(GitError::from_str(&format!("unable to get key from {}", path))),
+                false => Err(GitError::from_str(&format!(
+                    "unable to get key from {}",
+                    path
+                ))),
             }
         }
         Err(_) => Err(GitError::from_str("unable to get env variable HOME")),

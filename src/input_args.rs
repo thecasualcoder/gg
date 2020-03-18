@@ -1,7 +1,7 @@
 use clap::ArgMatches;
-use std::path::{PathBuf, Path};
 use colored::*;
 use std::env::current_dir;
+use std::path::{Path, PathBuf};
 use std::process;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -20,7 +20,7 @@ impl InputCommand {
             InputCommand::Create => "create",
             InputCommand::Fetch => "fetch",
             InputCommand::Clone => "clone",
-            _ => "unknown command"
+            _ => "unknown command",
         }
     }
 }
@@ -32,8 +32,12 @@ pub struct InputArgs<'a> {
 
 impl<'a> InputArgs<'a> {
     pub fn parse_inputs(args: ArgMatches) -> InputArgs {
-        let subcommand_name = args.subcommand_name().expect("Could not get subcommand name");
-        let matches = args.subcommand_matches(subcommand_name).expect("Failed to get arg matches");
+        let subcommand_name = args
+            .subcommand_name()
+            .expect("Could not get subcommand name");
+        let matches = args
+            .subcommand_matches(subcommand_name)
+            .expect("Failed to get arg matches");
         if subcommand_name == InputCommand::Status.as_str() {
             InputArgs {
                 input_command: InputCommand::Status,
@@ -72,13 +76,11 @@ impl<'a> InputArgs<'a> {
 
     pub fn get_root_path(&self, arg_name: &str) -> PathBuf {
         match &self.arg_matches.value_of(arg_name) {
-            Some(path) => { Path::new(path).to_path_buf() }
-            None => {
-                current_dir().unwrap_or_else(|err| {
-                    println!("{} {}", "Error accessing current_dir:".red(), err);
-                    process::exit(1);
-                })
-            }
+            Some(path) => Path::new(path).to_path_buf(),
+            None => current_dir().unwrap_or_else(|err| {
+                println!("{} {}", "Error accessing current_dir:".red(), err);
+                process::exit(1);
+            }),
         }
     }
 }
