@@ -1,4 +1,3 @@
-use colored::Colorize;
 use git2::{Error, Progress};
 use indicatif::{HumanBytes, MultiProgress, ProgressBar, ProgressStyle};
 use rayon::ThreadPool;
@@ -38,12 +37,18 @@ impl ProgressTracker {
         let mut prog_bar = ProgressBar::new_spinner()
             .with_style(ProgressStyle::default_bar().template(STYLE_PRELOAD));
 
+        // Disable drawing for now (to avoid hitting the draw limit frequency)
+        prog_bar.set_draw_delta(9);
+
         if let ProgressTracker::MultiThread { progress, .. } = self {
             prog_bar = progress.add(prog_bar);
         }
 
-        prog_bar.set_prefix(&remote_url.blue());
-        prog_bar.set_message(&"Waiting for process to begin".cyan());
+        prog_bar.set_prefix(remote_url);
+        prog_bar.set_message("Waiting for process to begin");
+
+        prog_bar.set_draw_delta(0);
+        prog_bar.tick();
 
         ProgressReporter(prog_bar)
     }
