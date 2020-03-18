@@ -5,10 +5,10 @@ use rayon::ThreadPool;
 
 use crate::git::GitAction;
 
-const STYLE_PRELOAD: &str = "{prefix:>40!.blue} {spinner} {wide_msg:.cyan}";
-const STYLE_LOAD: &str = "{prefix:>40!.blue} {msg} {wide_bar} {percent:>3}% {eta}";
-const STYLE_DONE: &str = "{prefix:>40!.blue} {wide_msg} {elapsed_precise}";
-const STYLE_ERROR: &str = "{prefix:>40!.blue} {wide_msg:.red}";
+const STYLE_PRELOAD: &str = "{prefix:<40.blue} {spinner} {wide_msg:.cyan}";
+const STYLE_LOAD: &str = "{prefix:<40.blue} {msg} {wide_bar} {percent:>3}% {eta}";
+const STYLE_DONE: &str = "{prefix:<40.blue} {wide_msg} {elapsed_precise}";
+const STYLE_ERROR: &str = "{prefix:<40.blue} {wide_msg:.red}";
 
 pub enum ProgressTracker {
     MultiThread {
