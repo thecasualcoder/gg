@@ -38,7 +38,7 @@ impl ProgressTracker {
         let mut prog_bar = ProgressBar::new_spinner()
             .with_style(ProgressStyle::default_bar().template(STYLE_PRELOAD));
 
-        if let Self::MultiThread { progress, .. } = self {
+        if let ProgressTracker::MultiThread { progress, .. } = self {
             prog_bar = progress.add(prog_bar);
         }
 
@@ -51,7 +51,7 @@ impl ProgressTracker {
     pub fn start_task(&self, mut action: impl GitAction + Send + 'static) {
         let progress_bar = self.new_bar(&action.get_name());
 
-        if let Self::MultiThread { pool, .. } = self {
+        if let ProgressTracker::MultiThread { pool, .. } = self {
             pool.spawn(move || action.do_git_action(progress_bar));
         } else {
             action.do_git_action(progress_bar);
@@ -59,7 +59,7 @@ impl ProgressTracker {
     }
 
     pub fn join(self) -> Result<(), std::io::Error> {
-        if let Self::MultiThread { progress, .. } = self {
+        if let ProgressTracker::MultiThread { progress, .. } = self {
             progress.join()?;
         }
 
