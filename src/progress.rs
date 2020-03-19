@@ -1,14 +1,13 @@
-use colored::Colorize;
 use git2::{Error, Progress};
 use indicatif::{HumanBytes, MultiProgress, ProgressBar, ProgressStyle};
 use rayon::ThreadPool;
 
 use crate::git::GitAction;
 
-const STYLE_PRELOAD: &str = "{prefix:>40!.blue} {spinner} {wide_msg:.cyan}";
-const STYLE_LOAD: &str = "{prefix:>40!.blue} {msg} {wide_bar} {percent:>3}% {eta}";
-const STYLE_DONE: &str = "{prefix:>40!.blue} {wide_msg} {elapsed_precise}";
-const STYLE_ERROR: &str = "{prefix:>40!.blue} {wide_msg:.red}";
+const STYLE_PRELOAD: &str = "{prefix:<40.blue} {spinner} {wide_msg:.cyan}";
+const STYLE_LOAD: &str = "{prefix:<40.blue} {msg} {wide_bar} {percent:>3}% {eta}";
+const STYLE_DONE: &str = "{prefix:<40.blue} {wide_msg} {elapsed_precise}";
+const STYLE_ERROR: &str = "{prefix:<40.blue} {wide_msg:.red}";
 
 pub enum ProgressTracker {
     MultiThread {
@@ -38,12 +37,18 @@ impl ProgressTracker {
         let mut prog_bar = ProgressBar::new_spinner()
             .with_style(ProgressStyle::default_bar().template(STYLE_PRELOAD));
 
-        if let Self::MultiThread { progress, .. } = self {
+        // Disable drawing for now (to avoid hitting the draw limit frequency)
+        prog_bar.set_draw_delta(9);
+
+        if let ProgressTracker::MultiThread { progress, .. } = self {
             prog_bar = progress.add(prog_bar);
         }
 
-        prog_bar.set_prefix(&remote_url.blue());
-        prog_bar.set_message(&"Waiting for process to begin".cyan());
+        prog_bar.set_prefix(remote_url);
+        prog_bar.set_message("Waiting for process to begin");
+
+        prog_bar.set_draw_delta(0);
+        prog_bar.tick();
 
         ProgressReporter(prog_bar)
     }
@@ -51,7 +56,7 @@ impl ProgressTracker {
     pub fn start_task(&self, mut action: impl GitAction + Send + 'static) {
         let progress_bar = self.new_bar(&action.get_name());
 
-        if let Self::MultiThread { pool, .. } = self {
+        if let ProgressTracker::MultiThread { pool, .. } = self {
             pool.spawn(move || action.do_git_action(progress_bar));
         } else {
             action.do_git_action(progress_bar);
@@ -59,7 +64,7 @@ impl ProgressTracker {
     }
 
     pub fn join(self) -> Result<(), std::io::Error> {
-        if let Self::MultiThread { progress, .. } = self {
+        if let ProgressTracker::MultiThread { progress, .. } = self {
             progress.join()?;
         }
 
