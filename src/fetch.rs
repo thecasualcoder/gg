@@ -67,19 +67,26 @@ pub fn git_credentials_callback(
     _user_from_url: Option<&str>,
     _cred: CredentialType,
 ) -> Result<Cred, GitError> {
-    match std::env::var("HOME") {
-        Ok(home) => {
-            let path = format!("{}/.ssh/id_rsa", home);
-            let credentials_path = std::path::Path::new(&path);
-            match credentials_path.exists() {
-                true => Cred::ssh_key("git", None, credentials_path, None),
-                false => Err(GitError::from_str(&format!(
-                    "unable to get key from {}",
-                    path
-                ))),
-            }
+    match std::env::var("GG_SSH_PATH") {
+        Ok(custom_ssh_path) => {
+            return get_ssh_value(custom_ssh_path);
         }
+        Err(_) => (),
+    }
+    return match std::env::var("HOME") {
+        Ok(home) => get_ssh_value(format!("{}/.ssh/id_rsa", home)),
         Err(_) => Err(GitError::from_str("unable to get env variable HOME")),
+    }
+}
+
+fn get_ssh_value(path: String) -> Result<Cred, GitError> {
+    let credentials_path = std::path::Path::new(&path);
+    match credentials_path.exists() {
+        true => Cred::ssh_key("git", None, credentials_path, None),
+        false => Err(GitError::from_str(&format!(
+            "unable to get key from {}",
+            path
+        ))),
     }
 }
 
