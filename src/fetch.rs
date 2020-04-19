@@ -1,10 +1,7 @@
-use std::error::Error;
-use std::process;
-
 use clap::{App, Arg, SubCommand};
 use colored::*;
 use git2::{
-    AutotagOption, Cred, CredentialType, Error as GitError, FetchOptions, RemoteCallbacks,
+    AutotagOption, Error as GitError, FetchOptions, RemoteCallbacks,
     Repository,
 };
 use regex::Regex;
@@ -14,8 +11,7 @@ use crate::dir::DirectoryTreeOptions;
 use crate::git::GitAction;
 use crate::input_args::InputArgs;
 use crate::progress::{ProgressReporter, ProgressTracker};
-use crate::conf;
-use crate::conf::ssh_auth_callback;
+use crate::conf::*;
 
 pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("fetch")
@@ -113,7 +109,7 @@ impl<'a> GitAction for GitFetch {
                         "local objects)".green()
                     )
                 } else {
-                    print!(
+                    format!(
                         "{} {}/{} {} {} {}",
                         "Received".green(),
                         stats.indexed_objects(),
