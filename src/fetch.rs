@@ -56,6 +56,7 @@ pub fn fetch(args: InputArgs, filter_list: Vec<Regex>) {
         .map(|dir| GitFetch {
             dir,
             remote: "origin".to_string(),
+            root: root.to_string(),
         })
         .for_each(|clone| multi_bars.start_task(clone));
 
@@ -93,11 +94,12 @@ fn get_ssh_value(path: String) -> Result<Cred, GitError> {
 pub struct GitFetch {
     dir: PathBuf,
     remote: String,
+    root: String
 }
 
 impl<'a> GitAction for GitFetch {
     fn get_name(&self) -> String {
-        format!("{} from {:?}", self.remote, self.dir)
+        format!("{} from {:?}", self.remote, Self::relative_path(&self.dir, &self.root))
     }
 
     fn git_action(&mut self, prog: &ProgressReporter) -> Result<String, GitError> {

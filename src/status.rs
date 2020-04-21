@@ -50,18 +50,22 @@ pub fn status(args: InputArgs, filter_list: Vec<Regex>) {
                 }
             })
         })
-        .map(|dir| GitStatus { dir })
+        .map(|dir| GitStatus {
+            dir,
+            root: root.to_string()
+        })
         .for_each(|status| multi_bars.start_task(status));
     multi_bars.join().unwrap();
 }
 
 pub struct GitStatus {
     dir: PathBuf,
+    root: String
 }
 
 impl<'a> GitAction for GitStatus {
     fn get_name(&self) -> String {
-        self.dir.to_string_lossy().to_string()
+        Self::relative_path(&self.dir, &self.root)
     }
 
     fn git_action(&mut self, _progress: &ProgressReporter) -> Result<String, GitError> {
