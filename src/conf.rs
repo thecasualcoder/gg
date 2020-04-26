@@ -2,8 +2,10 @@ use std::error::Error;
 use std::fs;
 use std::path::Path;
 
+use colored::Colorize;
 use git2::{Cred, CredentialType, Error as GitError};
 use regex::Regex;
+use crate::SSH_CONF;
 use serde::{Deserialize, Serialize};
 
 use crate::clone::GitRepo;
@@ -15,13 +17,20 @@ pub struct GGConf {
     #[serde(rename = "skipDirectories")]
     #[serde(default)]
     filter_list: Vec<String>,
+
     #[serde(skip)]
     pub filter_list_regex: Vec<Regex>,
+
     #[serde(alias = "cloneRepos")]
     #[serde(rename = "cloneRepos")]
     #[serde(default)]
     // Todo: Add validations on this field. It should not allow empty key/values.
     pub clone_repos: Vec<GitRepo>,
+
+    #[serde(alias = "ssh")]
+    #[serde(rename = "ssh")]
+    #[serde(default)]
+    pub ssh_config: Option<SSHConfig>,
 }
 
 impl GGConf {
@@ -30,6 +39,7 @@ impl GGConf {
             filter_list: vec![],
             filter_list_regex: vec![],
             clone_repos: vec![],
+            ssh_config: None,
         }
     }
 }
@@ -46,12 +56,12 @@ pub fn read_conf_file(conf_file: &str) -> Result<GGConf, Box<dyn Error>> {
     Ok(default)
 }
 
-fn update_conf_file(conf: &mut GGConf) -> Result<&mut GGConf, Box<dyn Error>> {
+fn update_conf_file<'a>(conf: &mut GGConf) -> Result<(), Box<dyn Error>> {
     create_filter_list(conf)?;
-    Ok(conf)
+    Ok(())
 }
 
-fn create_filter_list(conf: &mut GGConf) -> Result<&mut GGConf, Box<dyn Error>> {
+fn create_filter_list<'a>(conf: &mut GGConf) -> Result<(), Box<dyn Error>> {
     let mut filter_list = Vec::new();
     let mut filters = conf.filter_list.clone();
     let defaults: Vec<String> = [".idea", ".DS_Store"].iter().map(|&s| s.into()).collect();
@@ -67,26 +77,41 @@ fn create_filter_list(conf: &mut GGConf) -> Result<&mut GGConf, Box<dyn Error>> 
 
     conf.filter_list = filters;
     conf.filter_list_regex = filter_list;
-    Ok(conf)
+    Ok(())
 }
 
-pub fn ssh_auth_callback(
-    _user: &str,
-    _user_from_url: Option<&str>,
-    _cred: CredentialType,
-) -> Result<Cred, GitError> {
-    match std::env::var("HOME") {
-        Ok(home) => {
-            let path = format!("{}/.ssh/id_rsa", home);
-            let credentials_path = std::path::Path::new(&path);
-            match credentials_path.exists() {
-                true => Cred::ssh_key("git", None, credentials_path, None),
-                false => Err(GitError::from_str(&format!(
-                    "unable to get key from {}",
-                    path
-                ))),
-            }
-        }
-        Err(_) => Err(GitError::from_str("unable to get env variable HOME")),
-    }
+#[derive(Debug, Serialize, Deserialize, Default)]
+pub struct SSHConfig {
+    #[serde(alias = "privateKey")]
+    #[serde(rename = "privateKey")]
+    pub private_key: String,
+
+    pub username: String,
+
+    #[serde(alias = "sshAgent")]
+    #[serde(rename = "sshAgent")]
+    #[serde(default)]
+    pub ssh_agent: bool,
 }
+
+pub fn ssh_auth_callback(_user: &str, _user_from_url: Option<&str>, _cred: CredentialType) -> Result<Cred, GitError> {
+    let ssh_conf = SSH_CONF.lock().unwrap();
+
+    if ssh_conf.private_key.is_empty() {
+        println!("{}", "Please set the private key to be used to authenticate".red());
+    }
+
+    if ssh_conf.username.is_empty() {
+        println!("{}", "Please set the username to be used to authenticate".red());
+    }
+
+    if ssh_conf.ssh_agent {
+        return Cred::ssh_key_from_agent(ssh_conf.username.as_str());
+    }
+
+    Cred::ssh_key(ssh_conf.username.as_str(),
+                  None,
+                  Path::new(&ssh_conf.private_key),
+                  None)
+}
+

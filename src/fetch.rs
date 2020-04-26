@@ -1,7 +1,7 @@
 use clap::{App, Arg, SubCommand};
 use colored::*;
 use git2::{
-    AutotagOption, Cred, CredentialType, Error as GitError, FetchOptions, RemoteCallbacks,
+    AutotagOption, Error as GitError, FetchOptions, RemoteCallbacks,
     Repository,
 };
 use regex::Regex;
@@ -11,19 +11,17 @@ use crate::dir::DirectoryTreeOptions;
 use crate::git::GitAction;
 use crate::input_args::InputArgs;
 use crate::progress::{ProgressReporter, ProgressTracker};
+use crate::conf::*;
 
 pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("fetch")
-        .arg(
-            Arg::with_name("PATH")
-                .short("f")
-                .takes_value(true)
-                .help("path at which to fetch the git repos"),
-        )
-        .arg(
-            Arg::with_name("traverse-hidden")
-                .short("i")
-                .help("traverse through hidden directories also"),
+        .arg(Arg::with_name("PATH")
+            .short("f")
+            .takes_value(true)
+            .help("path at which to fetch the git repos"))
+        .arg(Arg::with_name("traverse-hidden")
+            .short("i")
+            .help("traverse through hidden directories also")
         )
 }
 
@@ -32,8 +30,8 @@ pub fn fetch(args: InputArgs, filter_list: Vec<Regex>) {
     let filter_hidden = matches.is_present("traverse-hidden");
 
     let dir_tree_with_options = DirectoryTreeOptions {
-        filter_list,
-        filter_hidden,
+        filter_list: filter_list,
+        filter_hidden: filter_hidden,
     };
 
     let root_path = args.get_root_path("PATH");
@@ -62,34 +60,6 @@ pub fn fetch(args: InputArgs, filter_list: Vec<Regex>) {
     multi_bars.join().unwrap();
 }
 
-pub fn git_credentials_callback(
-    _user: &str,
-    _user_from_url: Option<&str>,
-    _cred: CredentialType,
-) -> Result<Cred, GitError> {
-    match std::env::var("GG_SSH_PATH") {
-        Ok(custom_ssh_path) => {
-            return get_ssh_value(custom_ssh_path);
-        }
-        Err(_) => (),
-    }
-    return match std::env::var("HOME") {
-        Ok(home) => get_ssh_value(format!("{}/.ssh/id_rsa", home)),
-        Err(_) => Err(GitError::from_str("unable to get env variable HOME")),
-    }
-}
-
-fn get_ssh_value(path: String) -> Result<Cred, GitError> {
-    let credentials_path = std::path::Path::new(&path);
-    match credentials_path.exists() {
-        true => Cred::ssh_key("git", None, credentials_path, None),
-        false => Err(GitError::from_str(&format!(
-            "unable to get key from {}",
-            path
-        ))),
-    }
-}
-
 pub struct GitFetch {
     dir: PathBuf,
     remote: String,
@@ -110,14 +80,10 @@ impl<'a> GitAction for GitFetch {
                 .or_else(|_| repo.remote_anonymous(&self.remote))?
         } else {
             // TODO Use proper error handling
-            return Ok(format!(
-                "{} {:#?}",
-                "remote named {} not found for".red(),
-                path
-            ));
+            return Ok(format!("{} {:#?}", "remote named {} not found for".red(), path));
         };
         let mut cb = RemoteCallbacks::new();
-        cb.credentials(git_credentials_callback);
+        cb.credentials(ssh_auth_callback);
         cb.transfer_progress(prog.get_callback());
 
         let mut fetch_options = FetchOptions::new();

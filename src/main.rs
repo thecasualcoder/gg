@@ -2,14 +2,19 @@
 extern crate clap;
 extern crate colored;
 extern crate git2;
+extern crate lazy_static;
 extern crate reqwest;
 extern crate serde_yaml;
 extern crate walkdir;
 
+use std::{mem, sync::Mutex};
 use std::process;
 
 use clap::{crate_version, App, AppSettings, Arg};
 use colored::*;
+use lazy_static::lazy_static;
+
+use crate::conf::SSHConfig;
 
 mod clone;
 mod conf;
@@ -21,6 +26,14 @@ mod input_args;
 mod status;
 
 mod progress;
+
+lazy_static! {
+   pub static ref SSH_CONF: Mutex<SSHConfig> =  Mutex::new(SSHConfig{
+        private_key: String::from(format!("{}/.ssh/id_rsa", std::env::var("HOME").expect("HOME env not found"))),
+        ssh_agent: false,
+        username: String::from("git"),
+   });
+}
 
 fn main() {
     let app = App::new("Git Governance")
@@ -38,10 +51,8 @@ fn main() {
                 .short("j")
                 .global(true)
                 .takes_value(true)
-                .help(
-                    "Specifies the number of jobs to run simultaneously.
-Set to 1 to go monothread, by default is set to your number of CPUs.",
-                )
+                .help("Specifies the number of jobs to run simultaneously.\
+                Set to 1 to go monothread, by default is set to your number of CPUs.")
                 .validator(|str| {
                     str.parse()
                         .map(|_: usize| ())
@@ -59,13 +70,16 @@ Set to 1 to go monothread, by default is set to your number of CPUs.",
 
     let conf = conf::read_conf_file(global_matches.value_of("conf").unwrap_or(".ggConf.yaml"))
         .unwrap_or_else(|err| {
-            println!(
-                "{} {}",
-                "error while reading conf file:".red(),
-                err.to_string().red()
-            );
+            println!("{} {}", "error while reading conf file:".red(), err.to_string().red());
             process::exit(1)
         });
+
+    if conf.ssh_config.is_some() {
+        mem::replace(
+            &mut *SSH_CONF.lock().unwrap(),
+            conf.ssh_config.unwrap(),
+        );
+    }
 
     match args.input_command() {
         input_args::InputCommand::Status => status::status(args, conf.filter_list_regex),
