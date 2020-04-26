@@ -30,7 +30,6 @@ pub struct GGConf {
     #[serde(alias = "ssh")]
     #[serde(rename = "ssh")]
     #[serde(default)]
-
     pub ssh_config: Option<SSHConfig>,
 }
 
@@ -81,23 +80,6 @@ fn create_filter_list<'a>(conf: &mut GGConf) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-//pub fn ssh_auth_callback(_user: &str, _user_from_url: Option<&str>, _cred: CredentialType)
-//                         -> Result<Cred, GitError> {
-//
-//    match std::env::var("HOME") {
-//        Ok(home) => {
-//            let path = format!("{}/.ssh/id_rsa", home);
-//            let credentials_path = std::path::Path::new(&path);
-//            match credentials_path.exists() {
-//                true => Cred::ssh_key("git", None, credentials_path, None),
-//                false => Err(GitError::from_str(&format!("unable to get key from {}", path))),
-//            }
-//        }
-//        Err(_) => Err(GitError::from_str("unable to get env variable HOME")),
-//    }
-//}
-
-
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct SSHConfig {
     #[serde(alias = "privateKey")]
@@ -105,11 +87,6 @@ pub struct SSHConfig {
     pub private_key: String,
 
     pub username: String,
-
-    #[serde(alias = "askPassphrase")]
-    #[serde(rename = "askPassphrase")]
-    #[serde(default)]
-    pub ask_passphrase: bool,
 
     #[serde(alias = "sshAgent")]
     #[serde(rename = "sshAgent")]
@@ -132,11 +109,9 @@ pub fn ssh_auth_callback(_user: &str, _user_from_url: Option<&str>, _cred: Crede
         return Cred::ssh_key_from_agent(ssh_conf.username.as_str());
     }
 
-    // ask user for passphrase.
-
     Cred::ssh_key(ssh_conf.username.as_str(),
                   None,
                   Path::new(&ssh_conf.private_key),
-                  Some(""))
+                  None)
 }
 

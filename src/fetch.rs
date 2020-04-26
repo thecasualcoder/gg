@@ -80,11 +80,7 @@ impl<'a> GitAction for GitFetch {
                 .or_else(|_| repo.remote_anonymous(&self.remote))?
         } else {
             // TODO Use proper error handling
-            return Ok(format!(
-                "{} {:#?}",
-                "remote named {} not found for".red(),
-                path
-            ));
+            return Ok(format!("{} {:#?}", "remote named {} not found for".red(), path));
         };
         let mut cb = RemoteCallbacks::new();
         cb.credentials(ssh_auth_callback);

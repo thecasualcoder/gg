@@ -1,0 +1,17 @@
+# This will skip the directories while traversing
+#skipDirectories:
+#  - ignore
+
+# This will clone the repos from the given URL's into the given local paths
+#cloneRepos:
+#  - remoteURL: https://github.com/golang/net.git
+#    localPath: here/net
+#  - remoteURL: https://github.com/golang/net.git
+#    localPath: there/net
+#
+
+# This configures the ssh config used to access repositories. Use `ssh_agent: true` to let git agent take care of config.
+ssh:
+  privateKey: '/home/ninan/.ssh/gg'
+  username: 'git'
+  ssh_agent: false
