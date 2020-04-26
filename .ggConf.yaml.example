@@ -1,3 +1,5 @@
+# Rename this file to .ggConf.yaml
+
 # This will skip the directories while traversing
 #skipDirectories:
 #  - ignore
@@ -11,7 +13,7 @@
 #
 
 # This configures the ssh config used to access repositories. Use `ssh_agent: true` to let git agent take care of config.
-ssh:
-  privateKey: '/home/ninan/.ssh/gg'
-  username: 'git'
-  ssh_agent: false
+# ssh:
+#   privateKey: '/home/ninan/.ssh/gg'
+#   username: 'git'
+#   ssh_agent: false
