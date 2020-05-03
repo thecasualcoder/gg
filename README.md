@@ -78,7 +78,13 @@ cloneRepos:
     localPath: here/net
   - remoteURL: https://github.com/golang/net.git
     localPath: there/net
+ssh:
+    privateKey: '/home/ninan/.ssh/gg'
+    username: 'git'
+    ssh_agent: false
 ```
+
+See `.ggConf.example.yaml` for more details
 
 ##### Contributing:
 [Please refer the github projects board](https://github.com/thecasualcoder/gg/projects/1)
