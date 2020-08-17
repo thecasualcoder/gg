@@ -15,16 +15,24 @@ pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
                 .takes_value(true)
                 .help("path of the repo where branches are to be compared. Defaults to '.'"),
         )
+        .arg(
+            Arg::with_name("main_branch")
+                .short("b")
+                .default_value("origin/master")
+                .takes_value(true)
+                .help("the main branch against which other local branches are to be compared. Defaults to 'origin/master'"),
+        )
 }
 
 pub fn branches(args: InputArgs) {
     let root_path = args.get_root_path("repo_path");
+    let matches = args.get_matches();
+    let main_branch = matches.value_of("main_branch").unwrap();
     let repo = Repository::open(root_path).expect("Failed to open git repo");
 
-    // Todo: Use this to do the comparisons
     let mut git_branches = GitBranches {
         repo: repo,
-        main_branch: String::from("origin/master"),
+        main_branch: String::from(main_branch),
     };
 
     let branches = git_branches.get_branches().unwrap_or_else(|err| {
@@ -32,7 +40,6 @@ pub fn branches(args: InputArgs) {
         process::exit(1);
     });
 
-    // print!("{:#?}", branches);
     branches
         .into_iter()
         .for_each(|branch| {
