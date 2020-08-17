@@ -17,6 +17,7 @@ use lazy_static::lazy_static;
 use crate::conf::SSHConfig;
 
 mod clone;
+mod branches;
 mod conf;
 mod create;
 mod dir;
@@ -62,7 +63,9 @@ fn main() {
         .subcommand(status::sub_command())
         .subcommand(create::sub_command())
         .subcommand(fetch::sub_command())
+        .subcommand(branches::sub_command())
         .subcommand(clone::sub_command());
+
 
     let global_matches = app.get_matches();
 
@@ -84,6 +87,7 @@ fn main() {
     match args.input_command() {
         input_args::InputCommand::Status => status::status(args, conf.filter_list_regex),
         input_args::InputCommand::Create => create::create(args),
+        input_args::InputCommand::Branches => branches::branches(args),
         input_args::InputCommand::Clone => clone::clone(args, conf.clone_repos),
         input_args::InputCommand::Fetch => fetch::fetch(args, conf.filter_list_regex),
         input_args::InputCommand::Error => {}

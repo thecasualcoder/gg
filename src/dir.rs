@@ -17,10 +17,7 @@ impl DirectoryTreeOptions {
             .unwrap_or(false)
     }
 
-    pub fn process_directories(
-        self,
-        path: &str,
-    ) -> impl Iterator<Item = Result<DirEntry, walkdir::Error>> {
+    pub fn process_directories(self, path: &str) -> impl Iterator<Item=Result<DirEntry, walkdir::Error>> {
         WalkDir::new(path)
             .follow_links(false)
             .contents_first(false)
