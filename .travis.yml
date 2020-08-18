@@ -7,8 +7,6 @@ env:
   global:
   - PROJECT_NAME=gg
 matrix:
-  allow_failures:
-  - rust: nightly
   fast_finish: true
   include:
   - os: linux
