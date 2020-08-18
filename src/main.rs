@@ -1,5 +1,4 @@
 #![recursion_limit = "128"]
-#![feature(collections)]
 
 extern crate clap;
 extern crate colored;
