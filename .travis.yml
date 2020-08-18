@@ -2,7 +2,7 @@ language: rust
 sudo: required
 rust:
 - nightly
-- 1.36.0
+- 1.43.0
 env:
   global:
   - PROJECT_NAME=gg
@@ -12,10 +12,10 @@ matrix:
   fast_finish: true
   include:
   - os: linux
-    rust: stable
+    rust: nightly
     env: TARGET=x86_64-linux
   - os: osx
-    rust: stable
+    rust: nightly
     env: TARGET=x86_64-darwin
 script:
 - date
