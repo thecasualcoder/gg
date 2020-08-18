@@ -1,8 +1,5 @@
 language: rust
 sudo: required
-rust:
-- nightly
-- 1.43.0
 env:
   global:
   - PROJECT_NAME=gg
