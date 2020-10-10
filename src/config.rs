@@ -29,7 +29,7 @@ pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
 
 pub fn config(args: InputArgs, filter_list_regex: Vec<Regex>, filter_list: Vec<String>,
               mut existing_clone_repos: Vec<GitRepo>) {
-    let root_path = args.get_root_path("PATH");
+    let root_path = args.get_root_path("root_path");
     let root = root_path
         .to_str()
         .expect(format!("{}", "Error in converting directory to string".red()).as_str());
