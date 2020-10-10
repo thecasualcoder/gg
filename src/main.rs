@@ -92,7 +92,7 @@ fn main() {
         InputCommand::Status => status::status(args, conf.filter_list_regex),
         InputCommand::Create => create::create(args),
         InputCommand::Branches => branches::branches(args),
-        InputCommand::Config => config::config(args),
+        InputCommand::Config => config::config(args, conf.filter_list_regex, conf.filter_list, conf.clone_repos),
         InputCommand::Clone => clone::clone(args, conf.clone_repos),
         InputCommand::Fetch => fetch::fetch(args, conf.filter_list_regex),
         InputCommand::Error => {}

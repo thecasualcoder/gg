@@ -15,10 +15,10 @@ use crate::progress::{ProgressReporter, ProgressTracker};
 pub struct GitRepo {
     #[serde(alias = "remoteURL")]
     #[serde(rename = "remoteURL")]
-    remote_url: String,
+    pub remote_url: String,
     #[serde(alias = "localPath")]
     #[serde(rename = "localPath")]
-    local_path: String,
+    pub local_path: String,
 }
 
 pub fn sub_command<'a, 'b>() -> App<'a, 'b> {
