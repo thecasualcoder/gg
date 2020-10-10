@@ -11,6 +11,7 @@ pub enum InputCommand {
     Fetch,
     Clone,
     Branches,
+    Config,
     Error,
 }
 
@@ -22,6 +23,7 @@ impl InputCommand {
             InputCommand::Fetch => "fetch",
             InputCommand::Clone => "clone",
             InputCommand::Branches => "branches",
+            InputCommand::Config => "config",
             _ => "unknown command",
         }
     }
@@ -63,6 +65,11 @@ impl<'a> InputArgs<'a> {
         } else if subcommand_name == InputCommand::Branches.as_str() {
             InputArgs {
                 input_command: InputCommand::Branches,
+                arg_matches: matches.to_owned(),
+            }
+        } else if subcommand_name == InputCommand::Config.as_str() {
+            InputArgs {
+                input_command: InputCommand::Config,
                 arg_matches: matches.to_owned(),
             }
         } else {

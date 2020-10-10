@@ -16,7 +16,7 @@ pub struct GGConf {
     #[serde(alias = "skipDirectories")]
     #[serde(rename = "skipDirectories")]
     #[serde(default)]
-    filter_list: Vec<String>,
+    pub filter_list: Vec<String>,
 
     #[serde(skip)]
     pub filter_list_regex: Vec<Regex>,

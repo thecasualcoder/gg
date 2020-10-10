@@ -16,9 +16,11 @@ use colored::*;
 use lazy_static::lazy_static;
 
 use crate::conf::SSHConfig;
+use crate::input_args::InputCommand;
 
 mod clone;
 mod branches;
+mod config;
 mod conf;
 mod create;
 mod dir;
@@ -65,6 +67,7 @@ fn main() {
         .subcommand(create::sub_command())
         .subcommand(fetch::sub_command())
         .subcommand(branches::sub_command())
+        .subcommand(config::sub_command())
         .subcommand(clone::sub_command());
 
 
@@ -86,11 +89,12 @@ fn main() {
     }
 
     match args.input_command() {
-        input_args::InputCommand::Status => status::status(args, conf.filter_list_regex),
-        input_args::InputCommand::Create => create::create(args),
-        input_args::InputCommand::Branches => branches::branches(args),
-        input_args::InputCommand::Clone => clone::clone(args, conf.clone_repos),
-        input_args::InputCommand::Fetch => fetch::fetch(args, conf.filter_list_regex),
-        input_args::InputCommand::Error => {}
+        InputCommand::Status => status::status(args, conf.filter_list_regex),
+        InputCommand::Create => create::create(args),
+        InputCommand::Branches => branches::branches(args),
+        InputCommand::Config => config::config(args, conf.filter_list_regex, conf.filter_list, conf.clone_repos),
+        InputCommand::Clone => clone::clone(args, conf.clone_repos),
+        InputCommand::Fetch => fetch::fetch(args, conf.filter_list_regex),
+        InputCommand::Error => {}
     }
 }
